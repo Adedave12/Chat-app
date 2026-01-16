@@ -1,12 +1,11 @@
 /* eslint-disable no-unused-vars */
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
 import uploadFile from "../helpers/uploadFile";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
-import { motion } from "framer-motion";
 
 const RegisterPage = () => {
   const [data, setData] = useState({
@@ -19,17 +18,6 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      import('aos').then(AOS => {
-        AOS.init({
-          duration: 1000,
-          once: true,
-        });
-      });
-    }
-  }, []);
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
@@ -111,33 +99,23 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-purple-50 dark:from-gray-900 dark:via-black dark:to-purple-900 px-4 py-12">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
+      <div className="w-full max-w-md">
         <div
           className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden"
-          data-aos="fade-up"
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-primary to-secondary p-8 text-center">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring" }}
-            >
+            <div>
               <h1 className="text-4xl font-bold text-white mb-2">💬</h1>
               <h2 className="text-2xl font-bold text-white">Create Account</h2>
               <p className="text-purple-100 mt-2">Join us and start chatting!</p>
-            </motion.div>
+            </div>
           </div>
 
           {/* Form */}
           <div className="p-8">
             <form className="space-y-5" onSubmit={handleSubmit}>
-              <div data-aos="fade-right" data-aos-delay="100">
+              <div>
                 <label
                   htmlFor="name"
                   className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
@@ -157,7 +135,7 @@ const RegisterPage = () => {
                 />
               </div>
 
-              <div data-aos="fade-left" data-aos-delay="200">
+              <div>
                 <label
                   htmlFor="email"
                   className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
@@ -177,7 +155,7 @@ const RegisterPage = () => {
                 />
               </div>
 
-              <div data-aos="fade-right" data-aos-delay="300">
+              <div>
                 <label
                   htmlFor="password"
                   className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
@@ -206,7 +184,7 @@ const RegisterPage = () => {
                 </div>
               </div>
 
-              <div data-aos="fade-left" data-aos-delay="400">
+              <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Profile Picture (Optional)
                 </label>
@@ -249,14 +227,10 @@ const RegisterPage = () => {
                 />
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
                 type="submit"
                 className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                 disabled={loading}
-                data-aos="zoom-in"
-                data-aos-delay="500"
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
@@ -269,10 +243,10 @@ const RegisterPage = () => {
                 ) : (
                   "Create Account"
                 )}
-              </motion.button>
+              </button>
             </form>
 
-            <div className="mt-6 text-center" data-aos="fade-up" data-aos-delay="600">
+            <div className="mt-6 text-center">
               <p className="text-gray-600 dark:text-gray-400">
                 Already have an account?{" "}
                 <Link
@@ -285,7 +259,7 @@ const RegisterPage = () => {
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

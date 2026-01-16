@@ -26,11 +26,13 @@ const onlineUser = new Set();
 io.on("connection", async (socket) => {
   console.log("Connect User", socket.id);
 
+  let user;
+
   try {
     const token = socket.handshake.auth.token;
 
     // Current User Details
-    const user = await getUserDetailsFromToken(token);
+    user = await getUserDetailsFromToken(token);
 
     if (!user) {
       // If token verification fails, disconnect with an error
@@ -46,6 +48,29 @@ io.on("connection", async (socket) => {
     onlineUser.add(user._id.toString());
 
     io.emit("onlineUser", Array.from(onlineUser));
+
+    // Send undelivered messages to the user
+    const conversations = await ConversationModel.find({
+      receiver: user._id
+    }).populate("messages");
+
+    for (const conv of conversations) {
+      const undeliveredMessages = conv.messages.filter(msg => !msg.delivered && msg.msgByUserId !== user._id);
+      for (const msg of undeliveredMessages) {
+        socket.emit("receive_message", {
+          _id: msg._id,
+          text: msg.text,
+          imageUrl: msg.imageUrl,
+          videoUrl: msg.videoUrl,
+          msgByUserId: msg.msgByUserId,
+          delivered: true,
+          seen: msg.seen,
+          createdAt: msg.createdAt,
+        });
+        // Mark as delivered
+        await MessageModel.updateOne({ _id: msg._id }, { delivered: true });
+      }
+    }
 
     socket.on("message-page", async (userId) => {
       console.log("userId", userId);

@@ -6,7 +6,7 @@ import { Link, useParams } from "react-router-dom";
 import Avatar from "./Avatar";
 import { HiDotsVertical } from "react-icons/hi";
 import { FaAngleLeft, FaPlus, FaImage, FaVideo } from "react-icons/fa6";
-import { IoCheckmarkDoneSharp, IoCheckmarkSharp, IoIosClose } from "react-icons/io5";
+import { IoCheckmarkDoneSharp, IoCheckmarkSharp} from "react-icons/io5";
 import { IoMdSend } from "react-icons/io";
 import uploadFile from "../helpers/uploadFile";
 import Loading from "./Loading";
@@ -344,7 +344,7 @@ const MessagePage = () => {
               className="absolute top-4 right-4 cursor-pointer hover:text-red-600 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg"
               onClick={handleClearUploadImage}
             >
-              <IoIosClose size={30} />
+              {/* <IoIosClose size={30} /> */}
             </div>
             <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl">
               <img
@@ -363,7 +363,7 @@ const MessagePage = () => {
               className="absolute top-4 right-4 cursor-pointer hover:text-red-600 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg"
               onClick={handleClearUploadVideo}
             >
-              <IoIosClose size={30} />
+              {/* <IoIosClose size={30} /> */}
             </div>
             <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl">
               <video

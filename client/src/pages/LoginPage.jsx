@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useDispatch } from "react-redux";
 import { setToken, setUser } from "../redux/userSlice";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
-import { motion } from "framer-motion";
 
 const LoginPage = () => {
   const [data, setData] = useState({
@@ -16,18 +15,6 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    // Initialize AOS
-    if (typeof window !== 'undefined') {
-      import('aos').then(AOS => {
-        AOS.init({
-          duration: 1000,
-          once: true,
-        });
-      });
-    }
-  }, []);
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
@@ -84,33 +71,23 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-purple-50 dark:from-gray-900 dark:via-black dark:to-purple-900 px-4 py-12">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
+      <div className="w-full max-w-md">
         <div
           className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden"
-          data-aos="fade-up"
         >
           {/* Header with gradient */}
           <div className="bg-gradient-to-r from-primary to-secondary p-8 text-center">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring" }}
-            >
+            <div>
               <h1 className="text-4xl font-bold text-white mb-2">💬</h1>
               <h2 className="text-2xl font-bold text-white">Welcome Back!</h2>
               <p className="text-purple-100 mt-2">Login to continue chatting</p>
-            </motion.div>
+            </div>
           </div>
 
           {/* Form */}
           <div className="p-8">
             <form className="space-y-6" onSubmit={handleSubmit}>
-              <div data-aos="fade-right" data-aos-delay="100">
+              <div>
                 <label
                   htmlFor="email"
                   className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
@@ -130,7 +107,7 @@ const LoginPage = () => {
                 />
               </div>
 
-              <div data-aos="fade-left" data-aos-delay="200">
+              <div>
                 <label
                   htmlFor="password"
                   className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
@@ -159,7 +136,7 @@ const LoginPage = () => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-sm" data-aos="fade-up" data-aos-delay="300">
+              <div className="flex items-center justify-between text-sm">
                 <Link
                   to="/forgot-password"
                   className="text-primary hover:text-primary-dark font-semibold transition-colors"
@@ -168,14 +145,10 @@ const LoginPage = () => {
                 </Link>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button
                 type="submit"
                 className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
-                data-aos="zoom-in"
-                data-aos-delay="400"
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
@@ -188,10 +161,10 @@ const LoginPage = () => {
                 ) : (
                   "Login"
                 )}
-              </motion.button>
+              </button>
             </form>
 
-            <div className="mt-6 text-center" data-aos="fade-up" data-aos-delay="500">
+            <div className="mt-6 text-center">
               <p className="text-gray-600 dark:text-gray-400">
                 Don&apos;t have an account?{" "}
                 <Link
@@ -205,10 +178,7 @@ const LoginPage = () => {
           </div>
         </div>
 
-        {/* Decorative elements */}
-        <div className="absolute top-0 left-0 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute bottom-0 right-0 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse" style={{ animationDelay: "2s" }}></div>
-      </motion.div>
+      </div>
     </div>
   );
 };

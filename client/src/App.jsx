@@ -5,20 +5,11 @@ import { Outlet } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { setToken } from "./redux/userSlice";
 import "react-toastify/dist/ReactToastify.css";
-import AOS from "aos";
-import "aos/dist/aos.css";
 
 const App = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // Initialize AOS
-    AOS.init({
-      duration: 1000,
-      once: true,
-      easing: "ease-out-cubic",
-    });
-
     // Check for existing token
     const token = sessionStorage.getItem("token");
     if (token) {

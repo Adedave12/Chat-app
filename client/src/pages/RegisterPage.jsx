@@ -1,4 +1,3 @@
-import "react";
 import { useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
@@ -16,37 +15,39 @@ const RegisterPage = () => {
   });
   const [uploadPhoto, setUploadPhoto] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
-
-    setData((preve) => {
-      return {
-        ...preve,
-        [name]: value,
-      };
-    });
+    setData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleUploadPhoto = async (e) => {
     const file = e.target.files[0];
-
+    
+    setLoading(true);
     const uploadPhoto = await uploadFile(file);
+    setLoading(false);
+    
     setUploadPhoto(file);
-
-    setData((preve) => {
-      return {
-        ...preve,
-        profile_pic: uploadPhoto?.url,
-      };
-    });
+    setData((prev) => ({
+      ...prev,
+      profile_pic: uploadPhoto?.url,
+    }));
   };
 
   const handleClearUploadPhoto = (e) => {
     e.stopPropagation();
     e.preventDefault();
     setUploadPhoto(null);
+    setData((prev) => ({
+      ...prev,
+      profile_pic: "",
+    }));
   };
 
   const togglePasswordVisibility = () => {
@@ -58,6 +59,8 @@ const RegisterPage = () => {
     e.stopPropagation();
 
     const URL = `${import.meta.env.VITE_BACKEND_URL}/api/register`;
+
+    setLoading(true);
 
     try {
       const response = await axios.post(URL, data);
@@ -73,18 +76,18 @@ const RegisterPage = () => {
         navigate("/email");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message);
+      toast.error(error?.response?.data?.message || "Registration failed");
+    } finally {
+      setLoading(false);
     }
-
-    console.log("data", data);
   };
 
   return (
     <div className="mt-5">
-      <div className="bg-white w-full max-w-md rounded overflow-hidden p-4 mx-auto  dark:bg-slate-800 text-slate-800 dark:text-slate-200">
-        <h3>Welcome to Chat App!</h3>
+      <div className="bg-white w-full max-w-md rounded overflow-hidden p-4 mx-auto shadow-lg dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+        <h3 className="text-center text-xl font-semibold">Welcome to Chat App!</h3>
 
-        <form action="" className="grid gap-4 mt-5" onSubmit={handleSubmit}>
+        <form className="grid gap-4 mt-5" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-1">
             <label htmlFor="name">Name: </label>
             <input
@@ -92,10 +95,11 @@ const RegisterPage = () => {
               id="name"
               name="name"
               placeholder="Enter your name"
-              className="bg-slate-100 px-2 py-1 focus:outline-primary dark:text-slate-800  "
+              className="bg-slate-100 px-2 py-1 focus:outline-primary dark:text-slate-800"
               value={data.name}
               onChange={handleOnChange}
               required
+              disabled={loading}
             />
           </div>
 
@@ -110,6 +114,7 @@ const RegisterPage = () => {
               value={data.email}
               onChange={handleOnChange}
               required
+              disabled={loading}
             />
           </div>
 
@@ -125,6 +130,7 @@ const RegisterPage = () => {
                 value={data.password}
                 onChange={handleOnChange}
                 required
+                disabled={loading}
               />
               <button
                 type="button"
@@ -163,12 +169,18 @@ const RegisterPage = () => {
               name="profile_pic"
               className="bg-slate-100 px-2 py-1 focus:outline-primary hidden"
               onChange={handleUploadPhoto}
+              disabled={loading}
             />
           </div>
-          <button className="bg-primary text-lg px-4 py-1 hover:bg-secondary rounded mt-2 font-bold text-white leading-relaxed tracking-wide">
-            Register
+
+          <button 
+            className="bg-primary text-lg px-4 py-1 hover:bg-secondary rounded mt-2 font-bold text-white leading-relaxed tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading}
+          >
+            {loading ? "Registering..." : "Register"}
           </button>
         </form>
+
         <p className="my-3 text-center">
           Already have an account?{" "}
           <Link to={"/email"} className="hover:text-primary font-semibold">

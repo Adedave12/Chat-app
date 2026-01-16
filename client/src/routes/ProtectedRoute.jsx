@@ -6,7 +6,7 @@ const ProtectedRoute = ({ children }) => {
   const token = useSelector((state) => state.user.token) || sessionStorage.getItem("token");
 
   if (!token) {
-    return <Navigate to="/password" replace />;
+    return <Navigate to="/email" replace />;  // ✅ Fixed!
   }
 
   return children;

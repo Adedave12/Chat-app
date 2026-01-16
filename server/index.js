@@ -6,7 +6,6 @@ const router = require("./routes/index.js");
 const cookieParser = require("cookie-parser");
 const { app, server } = require("./socket/index.js");
 
-// const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "https://chat-app-front-sbk6.onrender.com"
@@ -26,7 +25,7 @@ app.use(
 );
 
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieParser()); // Keep for backward compatibility
 const PORT = process.env.PORT || 8000;
 
 app.get("/", (req, res) => {

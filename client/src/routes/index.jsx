@@ -1,20 +1,21 @@
 import { createBrowserRouter } from "react-router-dom";
 import App from "../App";
 import RegisterPage from "../pages/RegisterPage";
-import CheckEmailPage from "../pages/CheckEmailPage";
-import CheckPasswordPage from "../pages/CheckPasswordPage";
+import LoginPage from "../pages/LoginPage";
+import VerifyOTPPage from "../pages/VerifyOTPPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/ResetPasswordPage";
 import Home from "../pages/Home";
 import MessagePage from "../components/MessagePage";
 import AuthLayouts from "../layout";
-import Forgotpassword from "../pages/Forgotpassword";
-import ProtectedRoute from "./ProtectedRoute"; // <- ✅ Import it
+import ProtectedRoute from "./ProtectedRoute";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
-      // ✅ Protect Home route
+      // Protected routes
       {
         index: true,
         element: (
@@ -23,7 +24,6 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      // ✅ Protect Message route
       {
         path: ":userId",
         element: (
@@ -32,7 +32,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-
+      
       // Public Auth routes
       {
         path: "register",
@@ -43,18 +43,18 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "email",
+        path: "login",
         element: (
           <AuthLayouts>
-            <CheckEmailPage />
+            <LoginPage />
           </AuthLayouts>
         ),
       },
       {
-        path: "password",
+        path: "verify-otp",
         element: (
           <AuthLayouts>
-            <CheckPasswordPage />
+            <VerifyOTPPage />
           </AuthLayouts>
         ),
       },
@@ -62,7 +62,15 @@ const router = createBrowserRouter([
         path: "forgot-password",
         element: (
           <AuthLayouts>
-            <Forgotpassword />
+            <ForgotPasswordPage />
+          </AuthLayouts>
+        ),
+      },
+      {
+        path: "reset-password/:token",
+        element: (
+          <AuthLayouts>
+            <ResetPasswordPage />
           </AuthLayouts>
         ),
       },

@@ -5,16 +5,12 @@ import { useSelector } from "react-redux";
 import { Link, useParams } from "react-router-dom";
 import Avatar from "./Avatar";
 import { HiDotsVertical } from "react-icons/hi";
-import { FaAngleLeft } from "react-icons/fa6";
-import { FaPlus } from "react-icons/fa";
-import { FaImage } from "react-icons/fa6";
-import { FaVideo } from "react-icons/fa6";
-import { IoCheckmarkDoneSharp, IoCheckmarkSharp } from "react-icons/io5";
+import { FaAngleLeft, FaPlus, FaImage, FaVideo } from "react-icons/fa6";
+import { IoCheckmarkDoneSharp, IoCheckmarkSharp, IoIosClose } from "react-icons/io5";
+import { IoMdSend } from "react-icons/io";
 import uploadFile from "../helpers/uploadFile";
-import { IoIosClose } from "react-icons/io";
 import Loading from "./Loading";
 import backgroundImage from "../assets/wallapaper.jpeg";
-import { IoMdSend } from "react-icons/io";
 import moment from "moment";
 
 const MessagePage = () => {
@@ -39,7 +35,6 @@ const MessagePage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [allMessage, setAllMessage] = useState([]);
   const currentMessage = useRef(null);
-  // const [, setMessagesStatus] = useState({});
 
   useEffect(() => {
     if (currentMessage.current) {
@@ -116,21 +111,24 @@ const MessagePage = () => {
     }
 
     if (msg.seen) {
+      // Blue double tick for seen messages
       return (
-        <span className="text-primary ml-1">
-          <IoCheckmarkDoneSharp />
+        <span className="text-blue-500 ml-1" title="Seen">
+          <IoCheckmarkDoneSharp size={16} />
         </span>
       );
     } else if (msg.delivered) {
+      // Gray double tick for delivered messages
       return (
-        <span className="text-gray-500 ml-1">
-          <IoCheckmarkDoneSharp />
+        <span className="text-gray-400 ml-1" title="Delivered">
+          <IoCheckmarkDoneSharp size={16} />
         </span>
       );
     } else {
+      // Single tick for sent messages
       return (
-        <span className="text-gray-500 ml-1">
-          <IoCheckmarkSharp />
+        <span className="text-gray-400 ml-1" title="Sent">
+          <IoCheckmarkSharp size={16} />
         </span>
       );
     }
@@ -203,8 +201,7 @@ const MessagePage = () => {
   }, [socketConnection, params?.userId, user]);
 
   const handleOnchange = (e) => {
-    // eslint-disable-next-line no-unused-vars
-    const { name, value } = e.target;
+    const { value } = e.target;
 
     setMessage((preve) => {
       return {
@@ -226,10 +223,9 @@ const MessagePage = () => {
           imageUrl: message.imageUrl,
           videoUrl: message.videoUrl,
           msgByUserId: user?._id,
-          createdAt: new Date().toISOString(), // Add timestamp for immediate display
+          createdAt: new Date().toISOString(),
         };
 
-        // We don't need to update the UI here anymore as we'll rely on the socket message_sent event
         socketConnection.emit("new message", newMessage);
 
         setMessage({
@@ -244,83 +240,85 @@ const MessagePage = () => {
   return (
     <div
       style={{ backgroundImage: `url(${backgroundImage})` }}
-      className="bg-no-repeat bg-cover"
+      className="bg-no-repeat bg-cover h-screen"
     >
-      <header className="sticky top-0 h-16 bg-white flex justify-between items-center px-4  dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+      <header className="sticky top-0 h-16 bg-white dark:bg-gray-800 flex justify-between items-center px-4 shadow-md z-10 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-4">
-          <Link to={"/"} className="lg:hidden" title="Go back">
+          <Link to={"/"} className="lg:hidden hover:text-primary transition-colors" title="Go back">
             <FaAngleLeft size={25} />
           </Link>
           <div>
             <Avatar
-              width={50}
-              height={50}
+              width={48}
+              height={48}
               imageUrl={dataUser?.profile_pic}
               name={dataUser?.name}
               userId={dataUser?._id}
             />
           </div>
           <div>
-            <h3 className="font-semibold text-lg my-0 text-ellipsis line-clamp-1">
+            <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
               {dataUser?.name}
             </h3>
-            <p className="-my-2 text-sm">
+            <p className="text-sm">
               {dataUser.online ? (
-                <span className="text-primary">online</span>
+                <span className="text-green-500 font-medium flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  online
+                </span>
               ) : (
-                <span className="text-slate-400">offline</span>
+                <span className="text-gray-400">offline</span>
               )}
             </p>
           </div>
         </div>
         <div>
-          <button className="cursor-pointer hover:text-primary" title="Info">
-            <HiDotsVertical />
+          <button className="cursor-pointer hover:text-primary transition-colors" title="Options">
+            <HiDotsVertical size={22} />
           </button>
         </div>
       </header>
 
-      {/* To show all message */}
-      <section className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative bg-slate-200 bg-opacity-50 ">
-        {/* Text Dispaly */}
-        {/* Text Display */}
+      {/* Messages Section */}
+      <section className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative bg-slate-200/50 dark:bg-gray-900/50">
         <div className="flex flex-col gap-2 py-2 mx-2" ref={currentMessage}>
           {allMessage.map((msg, index) => {
             return (
               <div
                 key={index}
                 className={`
-          p-1 py-1 rounded w-fit max-w-[250px] md:max-w-sm lg:max-w-md 
-          ${
-            user._id === msg.msgByUserId
-              ? "ml-auto bg-teal-200 dark:bg-teal-800 text-slate-900 dark:text-teal-100"
-              : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
-          }
-        `}
+                  p-3 rounded-2xl w-fit max-w-[280px] md:max-w-sm lg:max-w-md shadow-lg transition-all duration-300 hover:shadow-xl
+                  ${
+                    user._id === msg.msgByUserId
+                      ? "ml-auto bg-gradient-to-r from-primary to-secondary text-white"
+                      : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  }
+                `}
               >
                 <div className="w-full">
                   {msg?.imageUrl && (
                     <img
                       src={msg?.imageUrl}
-                      className="w-full h-full object-scale-down"
+                      className="w-full h-full object-scale-down rounded-lg mb-2"
+                      alt="Sent image"
                     />
                   )}
                   {msg?.videoUrl && (
                     <video
                       src={msg?.videoUrl}
-                      className="w-full h-full object-scale-down"
+                      className="w-full h-full object-scale-down rounded-lg mb-2"
                       controls
                       muted
                       autoPlay
                     />
                   )}
                 </div>
-                <p className="px-2">{msg.text}</p>
-                <div className="flex items-center justify-end px-2 text-xs">
+                {msg.text && <p className="px-1 break-words">{msg.text}</p>}
+                <div className="flex items-center justify-end gap-1 px-1 text-xs mt-1 opacity-75">
                   <span>
                     {msg.createdAt
                       ? moment(msg.createdAt).format("hh:mm A")
-                      : "No timestamp"}
+                      : ""}
                   </span>
                   <MessageStatus msg={msg} />
                 </div>
@@ -329,47 +327,48 @@ const MessagePage = () => {
           })}
         </div>
 
-        {/* Loading indicator using custom Loading component */}
+        {/* Loading indicator */}
         {isUploading && (
-          <div className="w-full h-full bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden absolute top-0 left-0 z-10">
-            <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center sticky bottom-0 ">
+          <div className="w-full h-full bg-slate-700/60 backdrop-blur-sm flex justify-center items-center rounded overflow-hidden absolute top-0 left-0 z-10">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl flex flex-col items-center">
               <Loading />
-              <p className="text-primary mt-3">Uploading media...</p>
+              <p className="text-primary mt-3 font-semibold">Uploading media...</p>
             </div>
           </div>
         )}
-        {/* upload image display */}
+
+        {/* Upload image display */}
         {message.imageUrl && (
-          <div className="w-full sticky bottom-0 h-full bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden">
+          <div className="w-full sticky bottom-0 h-full bg-slate-700/60 backdrop-blur-sm flex justify-center items-center rounded overflow-hidden">
             <div
-              className="w-fit p-2 absolute top-0 right-0 cursor-pointer hover:text-red-600"
+              className="absolute top-4 right-4 cursor-pointer hover:text-red-600 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg"
               onClick={handleClearUploadImage}
             >
               <IoIosClose size={30} />
             </div>
-            <div className="bg-white p-3">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl">
               <img
                 src={message.imageUrl}
-                alt="uploadImage"
-                className="aspect-square w-full h-full max-w-sm m-2 object-scale-down"
+                alt="upload preview"
+                className="max-w-sm w-full h-auto rounded-lg"
               />
             </div>
           </div>
         )}
-        {/* upload video display */}
+
+        {/* Upload video display */}
         {message.videoUrl && (
-          <div className="w-full sticky bottom-0  h-full bg-slate-700 bg-opacity-30 flex justify-center items-center rounded overflow-hidden">
+          <div className="w-full sticky bottom-0 h-full bg-slate-700/60 backdrop-blur-sm flex justify-center items-center rounded overflow-hidden">
             <div
-              className="w-fit p-2 absolute top-0 right-0 cursor-pointer hover:text-red-600"
+              className="absolute top-4 right-4 cursor-pointer hover:text-red-600 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg"
               onClick={handleClearUploadVideo}
             >
               <IoIosClose size={30} />
             </div>
-            <div className="bg-white p-3">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl">
               <video
                 src={message.videoUrl}
-                alt="uploadVideo"
-                className="aspect-square w-full h-full max-w-sm m-2 object-scale-down"
+                className="max-w-sm w-full h-auto rounded-lg"
                 controls
                 muted
                 autoPlay
@@ -379,39 +378,39 @@ const MessagePage = () => {
         )}
       </section>
 
-      {/* Send Message */}
-      <section className="h-16 bg-white flex items-center px-4 text-slate-800 dark:text-slate-900">
-        <div className="relative ">
+      {/* Send Message Section */}
+      <section className="h-16 bg-white dark:bg-gray-800 flex items-center px-4 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+        <div className="relative">
           <button
             onClick={handleUploadImageVideoOpen}
-            className="flex justify-center items-center w-10 h-10 rounded-full hover:bg-primary hover:text-white "
+            className="flex justify-center items-center w-10 h-10 rounded-full hover:bg-primary/20 dark:hover:bg-primary/30 transition-all text-gray-600 dark:text-gray-300 hover:text-primary"
           >
-            <FaPlus title="Add Image/Video" size={17} />
+            <FaPlus title="Add Image/Video" size={18} />
           </button>
 
-          {/* video and image upload menu */}
+          {/* Upload menu */}
           {openImageVideoUpload && (
-            <div className="bg-white shadow rounded absolute bottom-14 w-36 p-2 z-20">
+            <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-xl absolute bottom-14 w-40 p-2 z-20 border border-gray-200 dark:border-gray-700">
               <form>
                 <label
                   htmlFor="uploadImage"
-                  className="flex items-center px-3 p-2 gap-3 hover:bg-slate-200 cursor-pointer"
+                  className="flex items-center px-3 py-2 gap-3 hover:bg-primary/10 dark:hover:bg-primary/20 cursor-pointer rounded-lg transition-all"
                   title="Upload Image"
                 >
                   <div className="text-primary">
                     <FaImage size={18} />
                   </div>
-                  <p>Image</p>
+                  <p className="text-gray-700 dark:text-gray-300">Image</p>
                 </label>
                 <label
                   htmlFor="uploadVideo"
-                  className="flex items-center px-3 p-2 gap-3 hover:bg-slate-200 cursor-pointer"
+                  className="flex items-center px-3 py-2 gap-3 hover:bg-primary/10 dark:hover:bg-primary/20 cursor-pointer rounded-lg transition-all"
                   title="Upload Video"
                 >
                   <div className="text-purple-600">
                     <FaVideo size={18} />
                   </div>
-                  <p>Video</p>
+                  <p className="text-gray-700 dark:text-gray-300">Video</p>
                 </label>
                 <input
                   type="file"
@@ -426,27 +425,30 @@ const MessagePage = () => {
                   accept="video/*"
                   onChange={handleUploadVideo}
                   className="hidden"
-                  autoPlay
                 />
               </form>
             </div>
           )}
         </div>
 
-        {/* input box */}
+        {/* Input box */}
         <form
-          className="h-full w-full flex gap-2 "
+          className="h-full w-full flex gap-2 items-center"
           onSubmit={handleSendMessage}
         >
           <input
             type="text"
-            placeholder="Type here..."
-            className="py-1 px-4 outline-none w-full h-full"
+            placeholder="Type your message..."
+            className="flex-1 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary transition-all"
             value={message.text}
             onChange={handleOnchange}
           />
-          <button title="Send" className="text-primary hover:text-secondary">
-            <IoMdSend size={25} />
+          <button
+            type="submit"
+            title="Send"
+            className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:shadow-glow transition-all flex items-center justify-center"
+          >
+            <IoMdSend size={20} />
           </button>
         </form>
       </section>

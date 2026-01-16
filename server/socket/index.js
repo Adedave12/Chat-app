@@ -8,34 +8,33 @@ const {
   MessageModel,
 } = require("../models/ConversationModel");
 const getConversation = require("../helpers/getConversation.js");
+
 const app = express();
 
 // Socket Connection
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "http://localhost:4173", "https://chat-app-front-sbk6.onrender.com"],
     credentials: true,
+    methods: ["GET", "POST"]
   },
 });
 
-// Socket is running at http://localhost:8000/
+// Online User - Using Map for better tracking
+const onlineUser = new Map(); // userId -> socketId
 
-// Online User
-const onlineUser = new Set();
 io.on("connection", async (socket) => {
-  console.log("Connect User", socket.id);
-
-  let user;
+  console.log("🔌 NEW CONNECTION:", socket.id);
 
   try {
     const token = socket.handshake.auth.token;
 
-    // Current User Details
-    user = await getUserDetailsFromToken(token);
+    // Get user from token
+    const user = await getUserDetailsFromToken(token);
 
-    if (!user) {
-      // If token verification fails, disconnect with an error
+    if (!user || !user._id) {
+      console.log("❌ NO USER - Auth failed");
       socket.emit("auth_error", {
         message: "Authentication failed. Please log in again.",
       });
@@ -43,144 +42,142 @@ io.on("connection", async (socket) => {
       return;
     }
 
-    // Rest of your connection code
-    socket.join(user._id.toString());
-    onlineUser.add(user._id.toString());
+    const userId = user._id.toString();
+    console.log("✅ USER AUTHENTICATED:", user.name, userId);
 
-    io.emit("onlineUser", Array.from(onlineUser));
+    // Join user's personal room
+    socket.join(userId);
+    
+    // Add to online users
+    onlineUser.set(userId, socket.id);
 
-    // Send undelivered messages to the user
-    const conversations = await ConversationModel.find({
-      receiver: user._id
-    }).populate("messages");
+    // Send updated online list to ALL users
+    const onlineUserIds = Array.from(onlineUser.keys());
+    console.log("👥 ONLINE USERS:", onlineUserIds.length, "users");
+    io.emit("onlineUser", onlineUserIds);
 
-    for (const conv of conversations) {
-      const undeliveredMessages = conv.messages.filter(msg => !msg.delivered && msg.msgByUserId !== user._id);
-      for (const msg of undeliveredMessages) {
-        socket.emit("receive_message", {
-          _id: msg._id,
-          text: msg.text,
-          imageUrl: msg.imageUrl,
-          videoUrl: msg.videoUrl,
-          msgByUserId: msg.msgByUserId,
-          delivered: true,
-          seen: msg.seen,
-          createdAt: msg.createdAt,
-        });
-        // Mark as delivered
-        await MessageModel.updateOne({ _id: msg._id }, { delivered: true });
-      }
-    }
+    // Update database status
+    await UserModel.findByIdAndUpdate(user._id, { status: "online" });
 
-    socket.on("message-page", async (userId) => {
-      console.log("userId", userId);
-      const userDetails = await UserModel.findById(userId).select("-password");
+    // ============ MESSAGE PAGE ============
+    socket.on("message-page", async (otherUserId) => {
+      console.log("\n📄 MESSAGE-PAGE EVENT");
+      console.log("Current user:", userId);
+      console.log("Opening chat with:", otherUserId);
+      
+      try {
+        // Get other user details
+        const userDetails = await UserModel.findById(otherUserId).select("-password");
 
-      const payload = {
-        _id: userDetails?._id,
-        name: userDetails?.name,
-        email: userDetails?.email,
-        profile_pic: userDetails?.profile_pic,
-        online: onlineUser.has(userId),
-      };
+        if (!userDetails) {
+          console.log("❌ Other user not found");
+          socket.emit("message-user", null);
+          return;
+        }
 
-      socket.emit("message-user", payload);
+        // Check if other user is online
+        const isOtherUserOnline = onlineUser.has(otherUserId);
+        console.log("Is other user online?", isOtherUserOnline);
 
-      // To load previous messages
-      const getConversationMessage = await ConversationModel.findOne({
-        $or: [
-          {
-            sender: user?.id,
-            receiver: userId,
-          },
-          {
-            sender: userId,
-            receiver: user?.id,
-          },
-        ],
-      })
-        .populate("messages")
-        .sort({ updatedAt: -1 });
+        const payload = {
+          _id: userDetails._id,
+          name: userDetails.name,
+          email: userDetails.email,
+          profile_pic: userDetails.profile_pic,
+          online: isOtherUserOnline,
+        };
 
-      // Check if conversation exists before accessing messages
-      if (getConversationMessage) {
-        socket.emit("message", getConversationMessage.messages);
-        
-        // When a user opens a chat, mark all messages from the other user as seen
-        await MessageModel.updateMany(
-          { 
-            _id: { $in: getConversationMessage.messages },
-            msgByUserId: userId,
-            seen: false 
-          },
-          { $set: { seen: true } }
-        );
-        
-        // Notify the sender that their messages have been seen
-        io.to(userId).emit("messages_seen_by", {
-          conversationId: getConversationMessage._id,
-          seenBy: user?._id
-        });
-        
-        // Update sidebar for both users
-        updateSidebarForUser(user?._id);
-        updateSidebarForUser(userId);
-      } else {
-        // If no conversation exists, emit an empty array
+        socket.emit("message-user", payload);
+
+        // Load conversation messages
+        const conversation = await ConversationModel.findOne({
+          $or: [
+            { sender: userId, receiver: otherUserId },
+            { sender: otherUserId, receiver: userId },
+          ],
+        }).populate("messages");
+
+        if (conversation && conversation.messages) {
+          console.log("📜 LOADED", conversation.messages.length, "messages");
+          socket.emit("message", conversation.messages);
+
+          // Mark messages as seen
+          await MessageModel.updateMany(
+            {
+              _id: { $in: conversation.messages.map(m => m._id) },
+              msgByUserId: otherUserId,
+              seen: false,
+            },
+            { $set: { seen: true } }
+          );
+
+          // Notify other user their messages were seen
+          if (onlineUser.has(otherUserId)) {
+            io.to(otherUserId).emit("messages_seen_by", {
+              conversationId: conversation._id,
+              seenBy: userId,
+            });
+          }
+        } else {
+          console.log("📜 NO MESSAGES - New conversation");
+          socket.emit("message", []);
+        }
+      } catch (error) {
+        console.error("❌ MESSAGE-PAGE ERROR:", error);
         socket.emit("message", []);
       }
     });
 
-    // New message handler
+    // ============ NEW MESSAGE ============
     socket.on("new message", async (data) => {
+      console.log("\n💬 NEW MESSAGE EVENT");
+      console.log("From:", userId, user.name);
+      console.log("To:", data.receiver);
+      console.log("Text:", data.text?.substring(0, 30) || "media");
+      
       try {
-        // Check if conversation is available for both users
+        // Find or create conversation
         let conversation = await ConversationModel.findOne({
           $or: [
-            {
-              sender: data?.sender,
-              receiver: data?.receiver,
-            },
-            {
-              sender: data?.receiver,
-              receiver: data?.sender,
-            },
+            { sender: data.sender, receiver: data.receiver },
+            { sender: data.receiver, receiver: data.sender },
           ],
         });
 
-        // If conversation is not available
         if (!conversation) {
-          const createConversation = await ConversationModel({
-            sender: data?.sender,
-            receiver: data?.receiver,
+          console.log("📝 Creating NEW conversation");
+          conversation = await ConversationModel.create({
+            sender: data.sender,
+            receiver: data.receiver,
           });
-          conversation = await createConversation.save();
+        } else {
+          console.log("📝 Using EXISTING conversation:", conversation._id);
         }
 
         // Check if receiver is online
         const isReceiverOnline = onlineUser.has(data.receiver);
+        console.log("🟢 Receiver online?", isReceiverOnline);
 
-        // Create and save the new message
+        // Create and save message
         const message = new MessageModel({
-          text: data.text,
-          imageUrl: data.imageUrl,
-          videoUrl: data.videoUrl,
-          msgByUserId: data?.msgByUserId,
-          delivered: isReceiverOnline, // Mark as delivered if receiver is online
-          seen: false
+          text: data.text || "",
+          imageUrl: data.imageUrl || "",
+          videoUrl: data.videoUrl || "",
+          msgByUserId: data.msgByUserId,
+          delivered: isReceiverOnline,
+          seen: false,
         });
 
         const savedMessage = await message.save();
+        console.log("✅ MESSAGE SAVED:", savedMessage._id);
 
-        // Update the conversation with the new message
+        // Add message to conversation
         await ConversationModel.updateOne(
-          { _id: conversation?._id },
-          {
-            $push: { messages: savedMessage?._id },
-          }
+          { _id: conversation._id },
+          { $push: { messages: savedMessage._id } }
         );
 
-        // Prepare the message to send back to clients
+        // Prepare message object to send
         const messageToSend = {
           _id: savedMessage._id,
           text: savedMessage.text,
@@ -192,133 +189,131 @@ io.on("connection", async (socket) => {
           createdAt: savedMessage.createdAt,
         };
 
-        io.to(data?.sender).emit("message_sent", messageToSend);
-        io.to(data?.receiver).emit("receive_message", messageToSend);
+        console.log("📤 EMITTING message_sent to sender:", data.sender);
+        io.to(data.sender).emit("message_sent", messageToSend);
 
-        // Update sidebar conversations for both users
-        updateSidebarForUser(data?.sender);
-        updateSidebarForUser(data?.receiver);
+        console.log("📤 EMITTING receive_message to receiver:", data.receiver);
+        io.to(data.receiver).emit("receive_message", messageToSend);
+
+        // Update sidebars
+        await updateSidebarForUser(data.sender);
+        await updateSidebarForUser(data.receiver);
+
+        console.log("✅ MESSAGE DELIVERY COMPLETE\n");
       } catch (error) {
-        console.error("Error handling new message:", error);
+        console.error("❌ NEW MESSAGE ERROR:", error);
         socket.emit("message_error", {
-          message: "Failed to send message. Please try again.",
+          message: "Failed to send message",
         });
       }
     });
 
-    // Mark messages as delivered when receiver comes online
+    // ============ MARK AS DELIVERED ============
     socket.on("mark_as_delivered", async (senderId) => {
       try {
-        // Find the conversation between the two users
         const conversation = await ConversationModel.findOne({
           $or: [
-            { sender: user._id, receiver: senderId },
-            { sender: senderId, receiver: user._id },
-          ]
+            { sender: userId, receiver: senderId },
+            { sender: senderId, receiver: userId },
+          ],
         }).populate("messages");
-        
+
         if (conversation) {
-          // Update all undelivered messages from the other user
-          const updatedMessages = await MessageModel.updateMany(
-            { 
-              _id: { $in: conversation.messages },
+          const result = await MessageModel.updateMany(
+            {
+              _id: { $in: conversation.messages.map(m => m._id) },
               msgByUserId: senderId,
-              delivered: false 
+              delivered: false,
             },
             { $set: { delivered: true } }
           );
-          
-          if (updatedMessages.modifiedCount > 0) {
-            // Notify the sender that their messages have been delivered
+
+          if (result.modifiedCount > 0) {
             io.to(senderId).emit("messages_delivered", {
               conversationId: conversation._id,
-              deliveredTo: user._id
+              deliveredTo: userId,
             });
           }
         }
       } catch (error) {
-        console.error("Error marking messages as delivered:", error);
+        console.error("❌ MARK DELIVERED ERROR:", error);
       }
     });
 
-    // Mark messages as seen
+    // ============ SEEN ============
     socket.on("seen", async (senderId) => {
       try {
-        // Find the conversation
         const conversation = await ConversationModel.findOne({
           $or: [
-            { sender: user._id, receiver: senderId },
-            { sender: senderId, receiver: user._id },
-          ]
+            { sender: userId, receiver: senderId },
+            { sender: senderId, receiver: userId },
+          ],
         }).populate("messages");
-        
+
         if (conversation) {
-          // Update all unseen messages from the other user
-          const updatedMessages = await MessageModel.updateMany(
-            { 
-              _id: { $in: conversation.messages },
+          const result = await MessageModel.updateMany(
+            {
+              _id: { $in: conversation.messages.map(m => m._id) },
               msgByUserId: senderId,
-              seen: false 
+              seen: false,
             },
             { $set: { seen: true } }
           );
-          
-          if (updatedMessages.modifiedCount > 0) {
-            // Notify the sender that their messages have been seen
+
+          if (result.modifiedCount > 0) {
             io.to(senderId).emit("messages_seen_by", {
               conversationId: conversation._id,
-              seenBy: user._id
+              seenBy: userId,
             });
-            
-            // Update sidebar for both users
-            updateSidebarForUser(user._id);
-            updateSidebarForUser(senderId);
+
+            await updateSidebarForUser(userId);
+            await updateSidebarForUser(senderId);
           }
         }
       } catch (error) {
-        console.error("Error marking messages as seen:", error);
+        console.error("❌ SEEN ERROR:", error);
       }
     });
 
-    // Helper function to update sidebar conversations for a user
-    async function updateSidebarForUser(userId) {
+    // ============ SIDEBAR ============
+    socket.on("sidebar", async (currentUserId) => {
+      console.log("📋 SIDEBAR REQUEST for:", currentUserId);
       try {
-        const conversations = await getConversation(userId);
-        io.to(userId).emit("conversation", conversations);
+        const conversations = await getConversation(currentUserId);
+        socket.emit("conversation", conversations);
       } catch (error) {
-        console.error(`Error updating sidebar for user ${userId}:`, error);
+        console.error("❌ SIDEBAR ERROR:", error);
+        socket.emit("conversation", []);
+      }
+    });
+
+    // Helper function to update sidebar
+    async function updateSidebarForUser(targetUserId) {
+      try {
+        const conversations = await getConversation(targetUserId);
+        io.to(targetUserId).emit("conversation", conversations);
+      } catch (error) {
+        console.error("❌ UPDATE SIDEBAR ERROR:", error);
       }
     }
 
-    // Sidebar conversations request
-    socket.on("sidebar", async (userId) => {
-      try {
-        const conversations = await getConversation(userId);
-        socket.emit("conversation", conversations); // This should always be an array
-      } catch (error) {
-        console.error("Error fetching conversations:", error);
-        socket.emit("conversation", []); // Send empty array on error
-      }
-    });
-
-    // User typing indicator
-    socket.on("typing", (data) => {
-      socket.to(data.receiver).emit("user_typing", {
-        senderId: data.sender,
-        isTyping: data.isTyping,
-      });
-    });
-
-    // Disconnect
+    // ============ DISCONNECT ============
     socket.on("disconnect", () => {
-      onlineUser.delete(user?._id);
-      io.emit("onlineUser", Array.from(onlineUser)); // Update online users list for everyone
-      console.log("disconnect user", socket.id);
+      console.log("🔌 DISCONNECTED:", socket.id, user.name);
+      onlineUser.delete(userId);
+      
+      // Broadcast updated online list
+      const onlineUserIds = Array.from(onlineUser.keys());
+      io.emit("onlineUser", onlineUserIds);
+      
+      // Update database
+      UserModel.findByIdAndUpdate(user._id, { status: "offline" }).catch(console.error);
     });
+
   } catch (error) {
-    console.error("Socket error:", error.message);
+    console.error("❌ SOCKET ERROR:", error);
     socket.emit("auth_error", {
-      message: "An error occurred. Please try again.",
+      message: "An error occurred",
     });
     socket.disconnect(true);
   }

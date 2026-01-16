@@ -11,6 +11,7 @@ import Sidebar from "../components/Sidebar";
 import io from "socket.io-client";
 import api from "../helpers/api";
 import { motion } from "framer-motion";
+import { toast } from "react-toastify";
 
 const Home = () => {
   const user = useSelector((state) => state.user);
@@ -42,27 +43,63 @@ const Home = () => {
     fetchUserDetails();
   }, []);
 
-  // Socket Connection
+  // Socket Connection with better error handling
   useEffect(() => {
     const token = sessionStorage.getItem("token");
-    if (!token) return;
+    if (!token) {
+      console.log("❌ No token found");
+      return;
+    }
+
+    console.log("🔌 Connecting to socket...");
 
     const socketConnection = io(import.meta.env.VITE_BACKEND_URL, {
       auth: {
         token: token,
       },
+      transports: ["websocket", "polling"], // Add both transports
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
+    // Connection successful
+    socketConnection.on("connect", () => {
+      console.log("✅ Socket connected:", socketConnection.id);
+      dispatch(setSocketConnection(socketConnection));
+    });
+
+    // Handle online users
     socketConnection.on("onlineUser", (data) => {
+      console.log("👥 Online users received:", data);
       dispatch(setOnlineUser(data));
     });
 
-    dispatch(setSocketConnection(socketConnection));
+    // Handle auth errors
+    socketConnection.on("auth_error", (data) => {
+      console.error("❌ Auth error:", data.message);
+      toast.error(data.message);
+      dispatch(logout());
+      navigate("/login");
+    });
 
+    // Handle connection errors
+    socketConnection.on("connect_error", (error) => {
+      console.error("❌ Socket connection error:", error);
+      toast.error("Failed to connect to server. Please refresh.");
+    });
+
+    // Handle disconnection
+    socketConnection.on("disconnect", (reason) => {
+      console.log("🔌 Socket disconnected:", reason);
+    });
+
+    // Cleanup on unmount
     return () => {
+      console.log("🔌 Cleaning up socket connection");
       socketConnection.disconnect();
     };
-  }, [dispatch]);
+  }, [dispatch, navigate]);
 
   const basePath = location.pathname === "/";
 

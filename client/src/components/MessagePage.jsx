@@ -6,18 +6,17 @@ import { Link, useParams } from "react-router-dom";
 import Avatar from "./Avatar";
 import { HiDotsVertical } from "react-icons/hi";
 import { FaAngleLeft, FaPlus, FaImage, FaVideo } from "react-icons/fa6";
-import { IoCheckmarkDoneSharp, IoCheckmarkSharp} from "react-icons/io5";
-import { IoMdSend } from "react-icons/io";
+import { IoCheckmarkDoneSharp, IoCheckmarkSharp } from "react-icons/io5";
+import { IoMdSend, IoIosClose } from "react-icons/io";
 import uploadFile from "../helpers/uploadFile";
 import Loading from "./Loading";
 import backgroundImage from "../assets/wallapaper.jpeg";
 import moment from "moment";
+import { toast } from "react-toastify";
 
 const MessagePage = () => {
   const params = useParams();
-  const socketConnection = useSelector(
-    (state) => state?.user?.socketConnection
-  );
+  const socketConnection = useSelector((state) => state?.user?.socketConnection);
   const user = useSelector((state) => state?.user);
   const [dataUser, setDataUser] = useState({
     name: "",
@@ -36,10 +35,11 @@ const MessagePage = () => {
   const [allMessage, setAllMessage] = useState([]);
   const currentMessage = useRef(null);
 
+  // Auto scroll to bottom
   useEffect(() => {
     if (currentMessage.current) {
       currentMessage.current.scrollIntoView({
-        behaviour: "smooth",
+        behavior: "smooth",
         block: "end",
       });
     }
@@ -61,8 +61,10 @@ const MessagePage = () => {
         imageUrl: uploadPhoto.url,
         videoUrl: "",
       }));
+      toast.success("Image uploaded!");
     } catch (error) {
       console.error("Error uploading image:", error);
+      toast.error("Failed to upload image");
     } finally {
       setIsUploading(false);
       setOpenImageVideoUpload(false);
@@ -70,17 +72,11 @@ const MessagePage = () => {
   };
 
   const handleClearUploadImage = () => {
-    setMessage((prev) => ({
-      ...prev,
-      imageUrl: "",
-    }));
+    setMessage((prev) => ({ ...prev, imageUrl: "" }));
   };
 
   const handleClearUploadVideo = () => {
-    setMessage((prev) => ({
-      ...prev,
-      videoUrl: "",
-    }));
+    setMessage((prev) => ({ ...prev, videoUrl: "" }));
   };
 
   const handleUploadVideo = async (e) => {
@@ -95,37 +91,35 @@ const MessagePage = () => {
         videoUrl: uploadPhoto.url,
         imageUrl: "",
       }));
+      toast.success("Video uploaded!");
     } catch (error) {
       console.error("Error uploading video:", error);
+      toast.error("Failed to upload video");
     } finally {
       setIsUploading(false);
       setOpenImageVideoUpload(false);
     }
   };
 
-  // Render message status indicators
+  // Message Status Component
   const MessageStatus = ({ msg }) => {
-    // Only show status for messages sent by the current user
     if (user._id !== msg.msgByUserId) {
       return null;
     }
 
     if (msg.seen) {
-      // Blue double tick for seen messages
       return (
         <span className="text-blue-500 ml-1" title="Seen">
           <IoCheckmarkDoneSharp size={16} />
         </span>
       );
     } else if (msg.delivered) {
-      // Gray double tick for delivered messages
       return (
         <span className="text-gray-400 ml-1" title="Delivered">
           <IoCheckmarkDoneSharp size={16} />
         </span>
       );
     } else {
-      // Single tick for sent messages
       return (
         <span className="text-gray-400 ml-1" title="Sent">
           <IoCheckmarkSharp size={16} />
@@ -134,107 +128,166 @@ const MessagePage = () => {
     }
   };
 
+  // Socket event handlers
   useEffect(() => {
-    if (socketConnection) {
-      // Join the message room for this conversation
-      socketConnection.emit("message-page", params.userId);
-      socketConnection.emit("mark_as_delivered", params.userId);
-      socketConnection.emit("seen", params.userId);
-
-      // Get user data of the conversation partner
-      socketConnection.on("message-user", (data) => {
-        setDataUser(data);
-      });
-
-      // Load initial message history
-      socketConnection.on("message", (data) => {
-        console.log("message data", data);
-        setAllMessage(data);
-      });
-
-      // Listen for new incoming messages
-      socketConnection.on("receive_message", (newMessage) => {
-        console.log("Received new message:", newMessage);
-        setAllMessage((prevMessages) => [...prevMessages, newMessage]);
-
-        // Mark received message as seen immediately since we're in the chat
-        socketConnection.emit("seen", newMessage.msgByUserId);
-      });
-
-      // Handle sent message confirmation
-      socketConnection.on("message_sent", (sentMessage) => {
-        console.log("Message sent confirmation:", sentMessage);
-        setAllMessage((prevMessages) => [...prevMessages, sentMessage]);
-      });
-
-      // Listen for messages being delivered
-      socketConnection.on("messages_delivered", (data) => {
-        console.log("Messages delivered:", data);
-        setAllMessage((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg.msgByUserId === user._id ? { ...msg, delivered: true } : msg
-          )
-        );
-      });
-
-      // Listen for messages being seen
-      socketConnection.on("messages_seen_by", (data) => {
-        console.log("Messages seen:", data);
-        setAllMessage((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg.msgByUserId === user._id ? { ...msg, seen: true } : msg
-          )
-        );
-      });
+    if (!socketConnection) {
+      console.log("❌ NO SOCKET CONNECTION");
+      return;
     }
 
-    return () => {
-      if (socketConnection) {
-        socketConnection.off("message-user");
-        socketConnection.off("message");
-        socketConnection.off("receive_message");
-        socketConnection.off("message_sent");
-        socketConnection.off("messages_delivered");
-        socketConnection.off("messages_seen_by");
+    if (!params.userId) {
+      console.log("❌ NO USER ID");
+      return;
+    }
+
+    console.log("\n🔌 SETTING UP MESSAGE PAGE");
+    console.log("Current user:", user._id);
+    console.log("Chat with:", params.userId);
+
+    // Emit message-page event
+    socketConnection.emit("message-page", params.userId);
+    socketConnection.emit("mark_as_delivered", params.userId);
+    socketConnection.emit("seen", params.userId);
+
+    // Listen for user details
+    const handleMessageUser = (data) => {
+      console.log("👤 GOT USER DATA:", data);
+      if (data) {
+        setDataUser(data);
       }
     };
-  }, [socketConnection, params?.userId, user]);
+
+    // Listen for message history
+    const handleMessages = (data) => {
+      console.log("📜 GOT MESSAGES:", Array.isArray(data) ? data.length : 0);
+      if (Array.isArray(data)) {
+        setAllMessage(data);
+      } else {
+        setAllMessage([]);
+      }
+    };
+
+    // Listen for new incoming message
+    const handleReceiveMessage = (newMessage) => {
+      console.log("📩 RECEIVED MESSAGE:", newMessage);
+      setAllMessage((prev) => {
+        // Check if message already exists
+        const exists = prev.some(msg => msg._id === newMessage._id);
+        if (exists) {
+          console.log("⚠️ Message already exists, skipping");
+          return prev;
+        }
+        return [...prev, newMessage];
+      });
+      
+      // Mark as seen
+      socketConnection.emit("seen", newMessage.msgByUserId);
+    };
+
+    // Listen for sent message confirmation
+    const handleMessageSent = (sentMessage) => {
+      console.log("✅ MESSAGE SENT CONFIRMED:", sentMessage);
+      setAllMessage((prev) => {
+        // Check if message already exists
+        const exists = prev.some(msg => msg._id === sentMessage._id);
+        if (exists) {
+          console.log("⚠️ Message already exists, skipping");
+          return prev;
+        }
+        return [...prev, sentMessage];
+      });
+    };
+
+    // Listen for delivery status
+    const handleMessagesDelivered = () => {
+      console.log("📬 MESSAGES DELIVERED");
+      setAllMessage((prev) =>
+        prev.map((msg) =>
+          msg.msgByUserId === user._id ? { ...msg, delivered: true } : msg
+        )
+      );
+    };
+
+    // Listen for seen status
+    const handleMessagesSeen = () => {
+      console.log("👁️ MESSAGES SEEN");
+      setAllMessage((prev) =>
+        prev.map((msg) =>
+          msg.msgByUserId === user._id ? { ...msg, seen: true } : msg
+        )
+      );
+    };
+
+    // Listen for errors
+    const handleMessageError = (error) => {
+      console.error("❌ MESSAGE ERROR:", error);
+      toast.error(error.message || "Failed to send message");
+    };
+
+    // Attach event listeners
+    socketConnection.on("message-user", handleMessageUser);
+    socketConnection.on("message", handleMessages);
+    socketConnection.on("receive_message", handleReceiveMessage);
+    socketConnection.on("message_sent", handleMessageSent);
+    socketConnection.on("messages_delivered", handleMessagesDelivered);
+    socketConnection.on("messages_seen_by", handleMessagesSeen);
+    socketConnection.on("message_error", handleMessageError);
+
+    // Cleanup
+    return () => {
+      console.log("🧹 CLEANING UP MESSAGE PAGE");
+      socketConnection.off("message-user", handleMessageUser);
+      socketConnection.off("message", handleMessages);
+      socketConnection.off("receive_message", handleReceiveMessage);
+      socketConnection.off("message_sent", handleMessageSent);
+      socketConnection.off("messages_delivered", handleMessagesDelivered);
+      socketConnection.off("messages_seen_by", handleMessagesSeen);
+      socketConnection.off("message_error", handleMessageError);
+    };
+  }, [socketConnection, params.userId, user._id]);
 
   const handleOnchange = (e) => {
     const { value } = e.target;
-
-    setMessage((preve) => {
-      return {
-        ...preve,
-        text: value,
-      };
-    });
+    setMessage((prev) => ({ ...prev, text: value }));
   };
 
   const handleSendMessage = (e) => {
     e.preventDefault();
 
-    if (message.text || message.imageUrl || message.videoUrl) {
-      if (socketConnection) {
-        const newMessage = {
-          sender: user?._id,
-          receiver: params.userId,
-          text: message.text,
-          imageUrl: message.imageUrl,
-          videoUrl: message.videoUrl,
-          msgByUserId: user?._id,
-          createdAt: new Date().toISOString(),
-        };
-
-        socketConnection.emit("new message", newMessage);
-
-        setMessage({
-          text: "",
-          imageUrl: "",
-          videoUrl: "",
-        });
-      }
+    if (!socketConnection) {
+      console.log("❌ NO SOCKET - Can't send message");
+      toast.error("Not connected to server. Please refresh.");
+      return;
     }
+
+    if (!message.text && !message.imageUrl && !message.videoUrl) {
+      console.log("❌ EMPTY MESSAGE");
+      return;
+    }
+
+    console.log("\n📤 SENDING MESSAGE");
+    console.log("From:", user._id);
+    console.log("To:", params.userId);
+    console.log("Text:", message.text);
+
+    const newMessage = {
+      sender: user._id,
+      receiver: params.userId,
+      text: message.text,
+      imageUrl: message.imageUrl,
+      videoUrl: message.videoUrl,
+      msgByUserId: user._id,
+      createdAt: new Date().toISOString(),
+    };
+
+    socketConnection.emit("new message", newMessage);
+
+    // Clear input
+    setMessage({
+      text: "",
+      imageUrl: "",
+      videoUrl: "",
+    });
   };
 
   return (
@@ -242,6 +295,7 @@ const MessagePage = () => {
       style={{ backgroundImage: `url(${backgroundImage})` }}
       className="bg-no-repeat bg-cover h-screen"
     >
+      {/* Header */}
       <header className="sticky top-0 h-16 bg-white dark:bg-gray-800 flex justify-between items-center px-4 shadow-md z-10 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-4">
           <Link to={"/"} className="lg:hidden hover:text-primary transition-colors" title="Go back">
@@ -258,12 +312,12 @@ const MessagePage = () => {
           </div>
           <div>
             <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
-              {dataUser?.name}
+              {dataUser?.name || "Loading..."}
             </h3>
             <p className="text-sm">
               {dataUser.online ? (
                 <span className="text-green-500 font-medium flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                   online
                 </span>
               ) : (
@@ -281,11 +335,18 @@ const MessagePage = () => {
 
       {/* Messages Section */}
       <section className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative bg-slate-200/50 dark:bg-gray-900/50">
-        <div className="flex flex-col gap-2 py-2 mx-2" ref={currentMessage}>
+        <div className="flex flex-col gap-2 py-4 px-2" ref={currentMessage}>
+          {allMessage.length === 0 && (
+            <div className="text-center text-gray-500 dark:text-gray-400 mt-10">
+              <p className="text-lg">No messages yet</p>
+              <p className="text-sm">Start the conversation! 👋</p>
+            </div>
+          )}
+
           {allMessage.map((msg, index) => {
             return (
               <div
-                key={index}
+                key={msg._id || index}
                 className={`
                   p-3 rounded-2xl w-fit max-w-[280px] md:max-w-sm lg:max-w-md shadow-lg transition-all duration-300 hover:shadow-xl
                   ${
@@ -298,27 +359,24 @@ const MessagePage = () => {
                 <div className="w-full">
                   {msg?.imageUrl && (
                     <img
-                      src={msg?.imageUrl}
+                      src={msg.imageUrl}
                       className="w-full h-full object-scale-down rounded-lg mb-2"
                       alt="Sent image"
                     />
                   )}
                   {msg?.videoUrl && (
                     <video
-                      src={msg?.videoUrl}
+                      src={msg.videoUrl}
                       className="w-full h-full object-scale-down rounded-lg mb-2"
                       controls
                       muted
-                      autoPlay
                     />
                   )}
                 </div>
                 {msg.text && <p className="px-1 break-words">{msg.text}</p>}
                 <div className="flex items-center justify-end gap-1 px-1 text-xs mt-1 opacity-75">
                   <span>
-                    {msg.createdAt
-                      ? moment(msg.createdAt).format("hh:mm A")
-                      : ""}
+                    {msg.createdAt ? moment(msg.createdAt).format("hh:mm A") : ""}
                   </span>
                   <MessageStatus msg={msg} />
                 </div>
@@ -327,7 +385,7 @@ const MessagePage = () => {
           })}
         </div>
 
-        {/* Loading indicator */}
+        {/* Loading */}
         {isUploading && (
           <div className="w-full h-full bg-slate-700/60 backdrop-blur-sm flex justify-center items-center rounded overflow-hidden absolute top-0 left-0 z-10">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl flex flex-col items-center">
@@ -337,14 +395,14 @@ const MessagePage = () => {
           </div>
         )}
 
-        {/* Upload image display */}
+        {/* Image Preview */}
         {message.imageUrl && (
           <div className="w-full sticky bottom-0 h-full bg-slate-700/60 backdrop-blur-sm flex justify-center items-center rounded overflow-hidden">
             <div
               className="absolute top-4 right-4 cursor-pointer hover:text-red-600 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg"
               onClick={handleClearUploadImage}
             >
-              {/* <IoIosClose size={30} /> */}
+              <IoIosClose size={30} />
             </div>
             <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl">
               <img
@@ -356,14 +414,14 @@ const MessagePage = () => {
           </div>
         )}
 
-        {/* Upload video display */}
+        {/* Video Preview */}
         {message.videoUrl && (
           <div className="w-full sticky bottom-0 h-full bg-slate-700/60 backdrop-blur-sm flex justify-center items-center rounded overflow-hidden">
             <div
               className="absolute top-4 right-4 cursor-pointer hover:text-red-600 bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg"
               onClick={handleClearUploadVideo}
             >
-              {/* <IoIosClose size={30} /> */}
+              <IoIosClose size={30} />
             </div>
             <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-2xl">
               <video
@@ -371,7 +429,6 @@ const MessagePage = () => {
                 className="max-w-sm w-full h-auto rounded-lg"
                 controls
                 muted
-                autoPlay
               />
             </div>
           </div>
@@ -388,14 +445,12 @@ const MessagePage = () => {
             <FaPlus title="Add Image/Video" size={18} />
           </button>
 
-          {/* Upload menu */}
           {openImageVideoUpload && (
             <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-xl absolute bottom-14 w-40 p-2 z-20 border border-gray-200 dark:border-gray-700">
               <form>
                 <label
                   htmlFor="uploadImage"
                   className="flex items-center px-3 py-2 gap-3 hover:bg-primary/10 dark:hover:bg-primary/20 cursor-pointer rounded-lg transition-all"
-                  title="Upload Image"
                 >
                   <div className="text-primary">
                     <FaImage size={18} />
@@ -405,7 +460,6 @@ const MessagePage = () => {
                 <label
                   htmlFor="uploadVideo"
                   className="flex items-center px-3 py-2 gap-3 hover:bg-primary/10 dark:hover:bg-primary/20 cursor-pointer rounded-lg transition-all"
-                  title="Upload Video"
                 >
                   <div className="text-purple-600">
                     <FaVideo size={18} />
@@ -431,11 +485,7 @@ const MessagePage = () => {
           )}
         </div>
 
-        {/* Input box */}
-        <form
-          className="h-full w-full flex gap-2 items-center"
-          onSubmit={handleSendMessage}
-        >
+        <form className="h-full w-full flex gap-2 items-center" onSubmit={handleSendMessage}>
           <input
             type="text"
             placeholder="Type your message..."

@@ -1,23 +1,30 @@
-/* eslint-disable no-unused-vars */
-import { useState } from "react";
-import { IoClose } from "react-icons/io5";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import uploadFile from "../helpers/uploadFile";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
+import { motion } from "framer-motion";
 
 const RegisterPage = () => {
   const [data, setData] = useState({
     name: "",
     email: "",
     password: "",
-    profile_pic: "",
   });
-  const [uploadPhoto, setUploadPhoto] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('aos').then(AOS => {
+        AOS.init({
+          duration: 1000,
+          once: true,
+        });
+      });
+    }
+  }, []);
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
@@ -27,41 +34,17 @@ const RegisterPage = () => {
     }));
   };
 
-  const handleUploadPhoto = async (e) => {
-    const file = e.target.files[0];
-
-    setLoading(true);
-    try {
-      const uploadPhoto = await uploadFile(file);
-      setUploadPhoto(file);
-      setData((prev) => ({
-        ...prev,
-        profile_pic: uploadPhoto?.url,
-      }));
-      toast.success("Photo uploaded successfully!");
-    } catch (error) {
-      toast.error("Failed to upload photo");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClearUploadPhoto = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setUploadPhoto(null);
-    setData((prev) => ({
-      ...prev,
-      profile_pic: "",
-    }));
-  };
-
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!data.name || !data.email || !data.password) {
+      toast.error("Please fill all fields");
+      return;
+    }
 
     if (data.password.length < 6) {
       toast.error("Password must be at least 6 characters");
@@ -73,7 +56,16 @@ const RegisterPage = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(URL, data);
+      console.log("Registering user:", data);
+      
+      const response = await axios.post(URL, {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        profile_pic: "", // Empty profile pic
+      });
+
+      console.log("Registration response:", response.data);
 
       if (response.data.success) {
         toast.success(response.data.message);
@@ -81,9 +73,7 @@ const RegisterPage = () => {
           name: "",
           email: "",
           password: "",
-          profile_pic: "",
         });
-        setUploadPhoto("");
         
         // Navigate to OTP verification
         navigate("/verify-otp", {
@@ -91,6 +81,8 @@ const RegisterPage = () => {
         });
       }
     } catch (error) {
+      console.error("Registration error:", error);
+      console.error("Error response:", error.response?.data);
       toast.error(error?.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
@@ -99,23 +91,33 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-purple-50 dark:from-gray-900 dark:via-black dark:to-purple-900 px-4 py-12">
-      <div className="w-full max-w-md">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
+      >
         <div
           className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden"
+          data-aos="fade-up"
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-primary to-secondary p-8 text-center">
-            <div>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring" }}
+            >
               <h1 className="text-4xl font-bold text-white mb-2">💬</h1>
               <h2 className="text-2xl font-bold text-white">Create Account</h2>
               <p className="text-purple-100 mt-2">Join us and start chatting!</p>
-            </div>
+            </motion.div>
           </div>
 
           {/* Form */}
           <div className="p-8">
             <form className="space-y-5" onSubmit={handleSubmit}>
-              <div>
+              <div data-aos="fade-right" data-aos-delay="100">
                 <label
                   htmlFor="name"
                   className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
@@ -135,7 +137,7 @@ const RegisterPage = () => {
                 />
               </div>
 
-              <div>
+              <div data-aos="fade-left" data-aos-delay="200">
                 <label
                   htmlFor="email"
                   className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
@@ -155,7 +157,7 @@ const RegisterPage = () => {
                 />
               </div>
 
-              <div>
+              <div data-aos="fade-right" data-aos-delay="300">
                 <label
                   htmlFor="password"
                   className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
@@ -184,53 +186,20 @@ const RegisterPage = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Profile Picture (Optional)
-                </label>
-                <label
-                  htmlFor="profile_pic"
-                  className="cursor-pointer block"
-                >
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 hover:border-primary transition-colors text-center">
-                    {uploadPhoto?.name ? (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                          {uploadPhoto.name}
-                        </span>
-                        <button
-                          type="button"
-                          className="text-red-500 hover:text-red-700 ml-2"
-                          onClick={handleClearUploadPhoto}
-                        >
-                          <IoClose size={24} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Click to upload profile picture
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB</p>
-                      </div>
-                    )}
-                  </div>
-                </label>
-                <input
-                  type="file"
-                  id="profile_pic"
-                  name="profile_pic"
-                  className="hidden"
-                  onChange={handleUploadPhoto}
-                  accept="image/*"
-                  disabled={loading}
-                />
+              <div data-aos="fade-up" data-aos-delay="400" className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  💡 <strong>Tip:</strong> You can add your profile picture later in settings!
+                </p>
               </div>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                 disabled={loading}
+                data-aos="zoom-in"
+                data-aos-delay="500"
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
@@ -243,10 +212,10 @@ const RegisterPage = () => {
                 ) : (
                   "Create Account"
                 )}
-              </button>
+              </motion.button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center" data-aos="fade-up" data-aos-delay="600">
               <p className="text-gray-600 dark:text-gray-400">
                 Already have an account?{" "}
                 <Link
@@ -259,7 +228,7 @@ const RegisterPage = () => {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

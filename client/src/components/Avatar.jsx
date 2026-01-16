@@ -86,7 +86,7 @@ const Avatar = ({ userId, name, imageUrl, width, height }) => {
       {isOnline && (
         <div className="absolute bottom-0 right-0">
           <div
-            className="bg-green-500 rounded-full border-2 border-white dark:border-gray-800 animate-pulse"
+            className="bg-green-500 rounded-full border-2 border-white dark:border-gray-800"
             style={{
               width: `${Math.max(width * 0.25, 10)}px`,
               height: `${Math.max(height * 0.25, 10)}px`,

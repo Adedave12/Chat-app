@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: [true, "Provide mail"],
+      required: [true, "Provide email"],
       unique: true,
     },
     password: {
@@ -18,6 +18,31 @@ const userSchema = new mongoose.Schema(
     profile_pic: {
       type: String,
       default: "",
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    otp: {
+      type: String,
+      default: null,
+    },
+    otpExpiry: {
+      type: Date,
+      default: null,
+    },
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+    resetPasswordExpiry: {
+      type: Date,
+      default: null,
+    },
+    status: {
+      type: String,
+      enum: ["online", "offline", "away", "busy"],
+      default: "offline",
     },
   },
   {

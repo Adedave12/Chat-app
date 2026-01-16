@@ -1,26 +1,24 @@
-/* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
-import { IoClose } from "react-icons/io5";
 import { Link, useNavigate } from "react-router-dom";
-import uploadFile from "../helpers/uploadFile";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+import { setToken, setUser } from "../redux/userSlice";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
 import { motion } from "framer-motion";
 
-const RegisterPage = () => {
+const LoginPage = () => {
   const [data, setData] = useState({
-    name: "",
     email: "",
     password: "",
-    profile_pic: "",
   });
-  const [uploadPhoto, setUploadPhoto] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
+    // Initialize AOS
     if (typeof window !== 'undefined') {
       import('aos').then(AOS => {
         AOS.init({
@@ -39,35 +37,6 @@ const RegisterPage = () => {
     }));
   };
 
-  const handleUploadPhoto = async (e) => {
-    const file = e.target.files[0];
-
-    setLoading(true);
-    try {
-      const uploadPhoto = await uploadFile(file);
-      setUploadPhoto(file);
-      setData((prev) => ({
-        ...prev,
-        profile_pic: uploadPhoto?.url,
-      }));
-      toast.success("Photo uploaded successfully!");
-    } catch (error) {
-      toast.error("Failed to upload photo");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClearUploadPhoto = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setUploadPhoto(null);
-    setData((prev) => ({
-      ...prev,
-      profile_pic: "",
-    }));
-  };
-
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -75,12 +44,12 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (data.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (!data.email || !data.password) {
+      toast.error("Please enter both email and password");
       return;
     }
 
-    const URL = `${import.meta.env.VITE_BACKEND_URL}/api/register`;
+    const URL = `${import.meta.env.VITE_BACKEND_URL}/api/login`;
 
     setLoading(true);
 
@@ -89,21 +58,25 @@ const RegisterPage = () => {
 
       if (response.data.success) {
         toast.success(response.data.message);
-        setData({
-          name: "",
-          email: "",
-          password: "",
-          profile_pic: "",
-        });
-        setUploadPhoto("");
-        
-        // Navigate to OTP verification
-        navigate("/verify-otp", {
-          state: { userId: response.data.userId },
-        });
+
+        // Save token and user data
+        const token = response.data.token;
+        dispatch(setToken(token));
+        dispatch(setUser(response.data.data));
+        sessionStorage.setItem("token", token);
+
+        setData({ email: "", password: "" });
+        navigate("/");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Registration failed");
+      if (error.response?.data?.needsVerification) {
+        toast.error(error.response.data.message);
+        navigate("/verify-otp", {
+          state: { userId: error.response.data.userId },
+        });
+      } else {
+        toast.error(error?.response?.data?.message || "Login failed");
+      }
     } finally {
       setLoading(false);
     }
@@ -121,7 +94,7 @@ const RegisterPage = () => {
           className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden"
           data-aos="fade-up"
         >
-          {/* Header */}
+          {/* Header with gradient */}
           <div className="bg-gradient-to-r from-primary to-secondary p-8 text-center">
             <motion.div
               initial={{ scale: 0 }}
@@ -129,35 +102,15 @@ const RegisterPage = () => {
               transition={{ delay: 0.2, type: "spring" }}
             >
               <h1 className="text-4xl font-bold text-white mb-2">💬</h1>
-              <h2 className="text-2xl font-bold text-white">Create Account</h2>
-              <p className="text-purple-100 mt-2">Join us and start chatting!</p>
+              <h2 className="text-2xl font-bold text-white">Welcome Back!</h2>
+              <p className="text-purple-100 mt-2">Login to continue chatting</p>
             </motion.div>
           </div>
 
           {/* Form */}
           <div className="p-8">
-            <form className="space-y-5" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div data-aos="fade-right" data-aos-delay="100">
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
-                >
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  placeholder="Enter your name"
-                  className="input-field"
-                  value={data.name}
-                  onChange={handleOnChange}
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <div data-aos="fade-left" data-aos-delay="200">
                 <label
                   htmlFor="email"
                   className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
@@ -177,7 +130,7 @@ const RegisterPage = () => {
                 />
               </div>
 
-              <div data-aos="fade-right" data-aos-delay="300">
+              <div data-aos="fade-left" data-aos-delay="200">
                 <label
                   htmlFor="password"
                   className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
@@ -189,7 +142,7 @@ const RegisterPage = () => {
                     type={showPassword ? "text" : "password"}
                     id="password"
                     name="password"
-                    placeholder="Create a password (min 6 characters)"
+                    placeholder="Enter your password"
                     className="input-field pr-12"
                     value={data.password}
                     onChange={handleOnChange}
@@ -206,57 +159,23 @@ const RegisterPage = () => {
                 </div>
               </div>
 
-              <div data-aos="fade-left" data-aos-delay="400">
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                  Profile Picture (Optional)
-                </label>
-                <label
-                  htmlFor="profile_pic"
-                  className="cursor-pointer block"
+              <div className="flex items-center justify-between text-sm" data-aos="fade-up" data-aos-delay="300">
+                <Link
+                  to="/forgot-password"
+                  className="text-primary hover:text-primary-dark font-semibold transition-colors"
                 >
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 hover:border-primary transition-colors text-center">
-                    {uploadPhoto?.name ? (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                          {uploadPhoto.name}
-                        </span>
-                        <button
-                          type="button"
-                          className="text-red-500 hover:text-red-700 ml-2"
-                          onClick={handleClearUploadPhoto}
-                        >
-                          <IoClose size={24} />
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Click to upload profile picture
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB</p>
-                      </div>
-                    )}
-                  </div>
-                </label>
-                <input
-                  type="file"
-                  id="profile_pic"
-                  name="profile_pic"
-                  className="hidden"
-                  onChange={handleUploadPhoto}
-                  accept="image/*"
-                  disabled={loading}
-                />
+                  Forgot password?
+                </Link>
               </div>
 
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
                 data-aos="zoom-in"
-                data-aos-delay="500"
+                data-aos-delay="400"
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
@@ -264,30 +183,34 @@ const RegisterPage = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Creating account...
+                    Logging in...
                   </span>
                 ) : (
-                  "Create Account"
+                  "Login"
                 )}
               </motion.button>
             </form>
 
-            <div className="mt-6 text-center" data-aos="fade-up" data-aos-delay="600">
+            <div className="mt-6 text-center" data-aos="fade-up" data-aos-delay="500">
               <p className="text-gray-600 dark:text-gray-400">
-                Already have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <Link
-                  to="/login"
+                  to="/register"
                   className="text-primary hover:text-primary-dark font-semibold transition-colors"
                 >
-                  Login here
+                  Register here
                 </Link>
               </p>
             </div>
           </div>
         </div>
+
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div className="absolute bottom-0 right-0 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse" style={{ animationDelay: "2s" }}></div>
       </motion.div>
     </div>
   );
 };
 
-export default RegisterPage;
+export default LoginPage;

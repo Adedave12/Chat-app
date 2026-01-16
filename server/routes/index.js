@@ -1,26 +1,29 @@
 const express = require("express");
 const registerUser = require("../controller/registerUser");
-const checkEmail = require("../controller/checkEmail");
-const checkPassword = require("../controller/checkPassword");
+const verifyOTP = require("../controller/verifyOTP");
+const resendOTP = require("../controller/resendOTP");
+const login = require("../controller/login");
 const userDetails = require("../controller/userDetails");
 const logout = require("../controller/logout");
 const updateUserDetails = require("../controller/updateUserDetails");
 const searchUser = require("../controller/searchUser");
+const forgotPassword = require("../controller/forgotPassword");
+const resetPassword = require("../controller/resetPassword");
 
 const router = express.Router();
 
-//Create user API
+// Authentication routes
 router.post("/register", registerUser);
-//check user email
-router.post("/email", checkEmail);
-//check user password
-router.post ('/password', checkPassword)
-//login user details
-router.get('/user-details', userDetails)
-//logout user
+router.post("/verify-otp", verifyOTP);
+router.post("/resend-otp", resendOTP);
+router.post("/login", login);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
+
+// User routes
+router.get("/user-details", userDetails);
 router.get("/logout", logout);
-//update user details
-router.post('/update-user', updateUserDetails)
-//Search User
-router.post ("/search-user", searchUser)
+router.post("/update-user", updateUserDetails);
+router.post("/search-user", searchUser);
+
 module.exports = router;

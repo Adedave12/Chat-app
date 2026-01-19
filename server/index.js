@@ -9,7 +9,7 @@ const { app, server } = require("./socket/index.js");
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:4173",
-  "https://chat-app-front-sbk6.onrender.com"
+  "https://chatlyx.netlify.app",
 ];
 
 app.use(

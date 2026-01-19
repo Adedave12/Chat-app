@@ -3,11 +3,15 @@ const UserModel = require("../models/UserModel");
 
 async function updateUserDetails(req, res) {
   try {
-    const token = req.cookies.token || "";
+    // Get token from Authorization header or cookies
+    const authHeader = req.headers.authorization;
+    const token = (authHeader && authHeader.startsWith('Bearer ')
+      ? authHeader.substring(7)
+      : req.cookies.token) || "";
 
     const user = await getUserDetailsFromToken(token);
 
-    const { name, profile_pic } = req.body;
+    const { name, profile_pic, bio } = req.body;
 
     const updateUser = await UserModel.updateOne(
       {
@@ -16,6 +20,7 @@ async function updateUserDetails(req, res) {
       {
         name,
         profile_pic,
+        bio,
       }
     );
 

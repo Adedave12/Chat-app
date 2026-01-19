@@ -62,22 +62,24 @@ io.on("connection", async (socket) => {
     // ============ MESSAGE PAGE ============
     socket.on("message-page", async (otherUserId) => {
       console.log("\n📄 MESSAGE-PAGE EVENT");
-      console.log("Current user:", userId);
+      console.log("Current user:", userId, user.name);
       console.log("Opening chat with:", otherUserId);
+      console.log("Online users before check:", Array.from(onlineUser.keys()));
       
       try {
         // Get other user details
         const userDetails = await UserModel.findById(otherUserId).select("-password");
 
         if (!userDetails) {
-          console.log("❌ Other user not found");
+          console.log("❌ Other user not found in database");
           socket.emit("message-user", null);
           return;
         }
 
         // Check if other user is online
         const isOtherUserOnline = onlineUser.has(otherUserId);
-        console.log("Is other user online?", isOtherUserOnline);
+        console.log("Is", userDetails.name, "online?", isOtherUserOnline);
+        console.log("Their socket ID:", onlineUser.get(otherUserId) || "not connected");
 
         const payload = {
           _id: userDetails._id,
@@ -284,6 +286,26 @@ io.on("connection", async (socket) => {
       } catch (error) {
         console.error("❌ SIDEBAR ERROR:", error);
         socket.emit("conversation", []);
+      }
+    });
+
+    // ============ TYPING INDICATOR ============
+    socket.on("typing", (data) => {
+      console.log("⌨️ TYPING EVENT:", {
+        from: data.sender,
+        to: data.receiver,
+        isTyping: data.isTyping
+      });
+      
+      // Send typing status to receiver
+      if (onlineUser.has(data.receiver)) {
+        io.to(data.receiver).emit("user_typing", {
+          senderId: data.sender,
+          isTyping: data.isTyping,
+        });
+        console.log("✅ Typing indicator sent to:", data.receiver);
+      } else {
+        console.log("❌ Receiver not online:", data.receiver);
       }
     });
 

@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import axios from "axios";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 import Avatar from "./Avatar";
 import uploadFile from "../helpers/uploadFile";
 import Divider from "./Divider";

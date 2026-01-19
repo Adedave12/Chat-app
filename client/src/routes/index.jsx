@@ -6,6 +6,10 @@ import VerifyOTPPage from "../pages/VerifyOTPPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
 import Home from "../pages/Home";
+import SettingsPage from "../pages/SettingsPage";
+import ProfilePage from "../pages/ProfilePage";
+import ChangePasswordPage from "../pages/ChangePasswordPage";
+import ThemeSettingsPage from "../pages/ThemeSettingsPage";
 import MessagePage from "../components/MessagePage";
 import AuthLayouts from "../layout";
 import ProtectedRoute from "./ProtectedRoute";
@@ -29,6 +33,40 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <MessagePage />
+          </ProtectedRoute>
+        ),
+      },
+      // Profile route
+      {
+        path: "profile",
+        element: (
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        ),
+      },
+      // Settings routes
+      {
+        path: "settings",
+        element: (
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "settings/password",
+        element: (
+          <ProtectedRoute>
+            <ChangePasswordPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "settings/theme",
+        element: (
+          <ProtectedRoute>
+            <ThemeSettingsPage />
           </ProtectedRoute>
         ),
       },

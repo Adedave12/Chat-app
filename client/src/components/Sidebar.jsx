@@ -1,35 +1,31 @@
 import "react";
 import { HiMiniChatBubbleOvalLeftEllipsis } from "react-icons/hi2";
-import { FaUserPlus, FaUsers } from "react-icons/fa";
+import { FaUserPlus, FaUsers, FaCog } from "react-icons/fa";
 import { MdArchive } from "react-icons/md";
 import { NavLink, useNavigate } from "react-router-dom";
-import { BiLogOut, BiSun, BiMoon } from "react-icons/bi";
 import Avatar from "./Avatar";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import EditUserDetails from "./EditUserDetails";
 import { FiArrowUpLeft } from "react-icons/fi";
 import SearchUser from "./SearchUser";
 import { FaImage, FaVideo } from "react-icons/fa6";
-import { useTheme } from "../context/ThemeContext";
 
 const Sidebar = () => {
-  const { isDarkMode, toggleTheme } = useTheme();
   const user = useSelector((state) => state?.user);
-  const [editUserOpen, setEditUserOpen] = useState(false);
+  const navigate = useNavigate();
   const [allUser, setAllUser] = useState([]);
   const [openSearchUser, setOpenSearchUser] = useState(false);
-  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const socketConnection = useSelector(
     (state) => state?.user?.socketConnection
   );
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
 
   useEffect(() => {
     if (socketConnection && user && user._id) {
+      console.log("📋 Requesting sidebar for user:", user._id);
       socketConnection.emit("sidebar", user._id);
+      
       socketConnection.on("conversation", (data) => {
+        console.log("📥 Received conversations:", data?.length || 0);
         if (Array.isArray(data)) {
           const conversationUserData = data.map((conversationUser) => {
             if (
@@ -64,26 +60,7 @@ const Sidebar = () => {
         socketConnection.off("conversation");
       }
     };
-  }, [socketConnection, user]);
-
-  const handleLogout = () => {
-    setLogoutConfirmOpen(true);
-  };
-
-  const confirmLogout = () => {
-    if (socketConnection) {
-      socketConnection.disconnect();
-    }
-
-    dispatch({ type: "LOGOUT_USER" });
-
-    localStorage.removeItem("token");
-    sessionStorage.removeItem("token");
-
-    navigate("/login");
-
-    setLogoutConfirmOpen(false);
-  };
+  }, [socketConnection, user, user?._id]);
 
   return (
     <div className="w-full h-full grid grid-cols-[64px,1fr] bg-white dark:bg-gray-900 shadow-lg">
@@ -130,10 +107,25 @@ const Sidebar = () => {
         </div>
 
         <div className="flex flex-col items-center space-y-2">
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              `w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl transition-all duration-300 ${
+                isActive
+                  ? "bg-primary text-white shadow-glow"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-primary/20 dark:hover:bg-gray-700"
+              }`
+            }
+            title="Settings"
+          >
+            <FaCog size={20} />
+          </NavLink>
+
+          {/* UPDATED: Clickable Avatar - Navigate to Profile */}
           <button
-            className="w-12 h-12"
-            title={user?.name}
-            onClick={() => setEditUserOpen(true)}
+            onClick={() => navigate("/profile")}
+            className="w-12 h-12 hover:ring-2 hover:ring-primary rounded-full transition-all duration-300"
+            title={`${user?.name} - View Profile`}
           >
             <Avatar
               width={48}
@@ -142,22 +134,6 @@ const Sidebar = () => {
               imageUrl={user?.profile_pic}
               userId={user?._id}
             />
-          </button>
-
-          <button
-            className="w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl text-gray-600 dark:text-gray-400 hover:bg-primary/20 dark:hover:bg-gray-700 transition-all duration-300"
-            title={isDarkMode ? "Light Mode" : "Dark Mode"}
-            onClick={toggleTheme}
-          >
-            {isDarkMode ? <BiSun size={20} /> : <BiMoon size={20} />}
-          </button>
-
-          <button
-            className="w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl text-gray-600 dark:text-gray-400 hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 transition-all duration-300"
-            title="Logout"
-            onClick={handleLogout}
-          >
-            <BiLogOut size={20} />
           </button>
         </div>
       </div>
@@ -245,42 +221,9 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {/* Edit User Details Modal */}
-      {editUserOpen && (
-        <EditUserDetails onClose={() => setEditUserOpen(false)} user={user} />
-      )}
-
       {/* Search User Modal */}
       {openSearchUser && (
         <SearchUser onClose={() => setOpenSearchUser(false)} />
-      )}
-
-      {/* Logout Confirmation Dialog */}
-      {logoutConfirmOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm">
-            <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
-              Confirm Logout
-            </h3>
-            <p className="mb-6 text-gray-600 dark:text-gray-300">
-              Are you sure you want to logout?
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                className="px-5 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300 font-semibold"
-                onClick={() => setLogoutConfirmOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-5 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all shadow-lg font-semibold"
-                onClick={confirmLogout}
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

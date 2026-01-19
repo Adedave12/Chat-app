@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast"; // Changed from sonner
 import { useDispatch } from "react-redux";
 import { setToken, setUser } from "../redux/userSlice";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
@@ -72,9 +72,7 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-purple-50 dark:from-gray-900 dark:via-black dark:to-purple-900 px-4 py-12">
       <div className="w-full max-w-md">
-        <div
-          className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden"
-        >
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
           {/* Header with gradient */}
           <div className="bg-gradient-to-r from-primary to-secondary p-8 text-center">
             <div>
@@ -177,7 +175,6 @@ const LoginPage = () => {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

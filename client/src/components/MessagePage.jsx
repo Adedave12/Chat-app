@@ -12,7 +12,7 @@ import uploadFile from "../helpers/uploadFile";
 import Loading from "./Loading";
 import backgroundImage from "../assets/wallapaper.jpeg";
 import moment from "moment";
-import { toast } from "react-toastify";
+import toast from "react-hot-toast";
 
 const MessagePage = () => {
   const params = useParams();
@@ -33,6 +33,9 @@ const MessagePage = () => {
   });
   const [isUploading, setIsUploading] = useState(false);
   const [allMessage, setAllMessage] = useState([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState(null);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const currentMessage = useRef(null);
 
   // Auto scroll to bottom
@@ -44,6 +47,18 @@ const MessagePage = () => {
       });
     }
   }, [allMessage]);
+
+  // Close options menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showOptionsMenu && !event.target.closest('.relative')) {
+        setShowOptionsMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showOptionsMenu]);
 
   const handleUploadImageVideoOpen = () => {
     setOpenImageVideoUpload((prev) => !prev);
@@ -144,10 +159,12 @@ const MessagePage = () => {
     console.log("Current user:", user._id);
     console.log("Chat with:", params.userId);
 
-    // Emit message-page event
-    socketConnection.emit("message-page", params.userId);
-    socketConnection.emit("mark_as_delivered", params.userId);
-    socketConnection.emit("seen", params.userId);
+    // Small delay to ensure socket is ready
+    const setupTimeout = setTimeout(() => {
+      socketConnection.emit("message-page", params.userId);
+      socketConnection.emit("mark_as_delivered", params.userId);
+      socketConnection.emit("seen", params.userId);
+    }, 100);
 
     // Listen for user details
     const handleMessageUser = (data) => {
@@ -179,7 +196,16 @@ const MessagePage = () => {
         }
         return [...prev, newMessage];
       });
-      
+
+      // Play notification sound
+      try {
+        const audio = new Audio('/notification.mp3');
+        audio.volume = 0.5; // Set volume to 50%
+        audio.play().catch(err => console.log('Audio play failed:', err));
+      } catch {
+        console.log('Notification sound not available');
+      }
+
       // Mark as seen
       socketConnection.emit("seen", newMessage.msgByUserId);
     };
@@ -224,6 +250,25 @@ const MessagePage = () => {
       toast.error(error.message || "Failed to send message");
     };
 
+    // Listen for typing indicator
+    const handleUserTyping = (data) => {
+      console.log("⌨️ FRONTEND: User typing received:", data);
+      if (data.senderId === params.userId) {
+        console.log("✅ Setting typing to:", data.isTyping);
+        setIsTyping(data.isTyping);
+        
+        // Auto-hide typing after 3 seconds
+        if (data.isTyping) {
+          setTimeout(() => {
+            console.log("⏰ Auto-hiding typing indicator");
+            setIsTyping(false);
+          }, 3000);
+        }
+      } else {
+        console.log("❌ Typing from different user:", data.senderId, "vs", params.userId);
+      }
+    };
+
     // Attach event listeners
     socketConnection.on("message-user", handleMessageUser);
     socketConnection.on("message", handleMessages);
@@ -232,10 +277,13 @@ const MessagePage = () => {
     socketConnection.on("messages_delivered", handleMessagesDelivered);
     socketConnection.on("messages_seen_by", handleMessagesSeen);
     socketConnection.on("message_error", handleMessageError);
+    socketConnection.on("user_typing", handleUserTyping);
 
     // Cleanup
     return () => {
       console.log("🧹 CLEANING UP MESSAGE PAGE");
+      clearTimeout(setupTimeout);
+      if (typingTimeout) clearTimeout(typingTimeout);
       socketConnection.off("message-user", handleMessageUser);
       socketConnection.off("message", handleMessages);
       socketConnection.off("receive_message", handleReceiveMessage);
@@ -243,12 +291,39 @@ const MessagePage = () => {
       socketConnection.off("messages_delivered", handleMessagesDelivered);
       socketConnection.off("messages_seen_by", handleMessagesSeen);
       socketConnection.off("message_error", handleMessageError);
+      socketConnection.off("user_typing", handleUserTyping);
     };
   }, [socketConnection, params.userId, user._id]);
 
   const handleOnchange = (e) => {
     const { value } = e.target;
     setMessage((prev) => ({ ...prev, text: value }));
+
+    // Send typing indicator
+    if (socketConnection && params.userId) {
+      // Clear previous timeout
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+
+      // Emit typing start
+      socketConnection.emit("typing", {
+        sender: user._id,
+        receiver: params.userId,
+        isTyping: true,
+      });
+
+      // Set timeout to stop typing after 1 second of no input
+      const timeout = setTimeout(() => {
+        socketConnection.emit("typing", {
+          sender: user._id,
+          receiver: params.userId,
+          isTyping: false,
+        });
+      }, 1000);
+
+      setTypingTimeout(timeout);
+    }
   };
 
   const handleSendMessage = (e) => {
@@ -315,9 +390,18 @@ const MessagePage = () => {
               {dataUser?.name || "Loading..."}
             </h3>
             <p className="text-sm">
-              {dataUser.online ? (
+              {isTyping ? (
+                <span className="text-primary font-medium flex items-center gap-1 animate-pulse">
+                  <span>typing</span>
+                  <span className="flex gap-1">
+                    <span className="w-1 h-1 bg-primary rounded-full animate-bounce"></span>
+                    <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></span>
+                    <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></span>
+                  </span>
+                </span>
+              ) : dataUser.online ? (
                 <span className="text-green-500 font-medium flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span></span>
                   online
                 </span>
               ) : (
@@ -326,10 +410,52 @@ const MessagePage = () => {
             </p>
           </div>
         </div>
-        <div>
-          <button className="cursor-pointer hover:text-primary transition-colors" title="Options">
+        <div className="relative">
+          <button
+            onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+            className="cursor-pointer hover:text-primary transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+            title="Options"
+          >
             <HiDotsVertical size={22} />
           </button>
+
+          {/* Options Menu */}
+          {showOptionsMenu && (
+            <div className="absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 w-48 py-2 z-20">
+              <button
+                onClick={() => {
+                  toast.info("Archive feature coming soon!");
+                  setShowOptionsMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300"
+              >
+                <span className="text-lg">📁</span>
+                Archive Chat
+              </button>
+              <button
+                onClick={() => {
+                  toast.info("Block feature coming soon!");
+                  setShowOptionsMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300"
+              >
+                <span className="text-lg">🚫</span>
+                Block User
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm("Are you sure you want to delete this conversation?")) {
+                    toast.info("Delete feature coming soon!");
+                  }
+                  setShowOptionsMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-3 text-red-600 dark:text-red-400"
+              >
+                <span className="text-lg">🗑️</span>
+                Delete Chat
+              </button>
+            </div>
+          )}
         </div>
       </header>
 

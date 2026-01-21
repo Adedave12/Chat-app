@@ -11,6 +11,9 @@ import ProfilePage from "../pages/ProfilePage";
 import ChangePasswordPage from "../pages/ChangePasswordPage";
 import ThemeSettingsPage from "../pages/ThemeSettingsPage";
 import MessagePage from "../components/MessagePage";
+import GroupsPage from "../pages/GroupsPage";
+import GroupChatPage from "../pages/GroupChatPage";
+import GroupInfoPage from "../pages/GroupInfoPage";
 import AuthLayouts from "../layout";
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -36,6 +39,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      
       // Profile route
       {
         path: "profile",
@@ -45,6 +49,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      
       // Settings routes
       {
         path: "settings",
@@ -67,6 +72,32 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <ThemeSettingsPage />
+          </ProtectedRoute>
+        ),
+      },
+      
+      // Group routes
+      {
+        path: "groups",
+        element: (
+          <ProtectedRoute>
+            <GroupsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "groups/:groupId",
+        element: (
+          <ProtectedRoute>
+            <GroupChatPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "groups/:groupId/info",
+        element: (
+          <ProtectedRoute>
+            <GroupInfoPage />
           </ProtectedRoute>
         ),
       },

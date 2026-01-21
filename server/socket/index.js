@@ -8,6 +8,7 @@ const {
   MessageModel,
 } = require("../models/ConversationModel");
 const getConversation = require("../helpers/getConversation.js");
+const GroupModel = require("../models/GroupModel");
 
 const app = express();
 
@@ -64,7 +65,6 @@ io.on("connection", async (socket) => {
       console.log("\n📄 MESSAGE-PAGE EVENT");
       console.log("Current user:", userId, user.name);
       console.log("Opening chat with:", otherUserId);
-      console.log("Online users before check:", Array.from(onlineUser.keys()));
       
       try {
         // Get other user details
@@ -79,7 +79,6 @@ io.on("connection", async (socket) => {
         // Check if other user is online
         const isOtherUserOnline = onlineUser.has(otherUserId);
         console.log("Is", userDetails.name, "online?", isOtherUserOnline);
-        console.log("Their socket ID:", onlineUser.get(otherUserId) || "not connected");
 
         const payload = {
           _id: userDetails._id,
@@ -135,7 +134,6 @@ io.on("connection", async (socket) => {
       console.log("\n💬 NEW MESSAGE EVENT");
       console.log("From:", userId, user.name);
       console.log("To:", data.receiver);
-      console.log("Text:", data.text?.substring(0, 30) || "media");
       
       try {
         // Find or create conversation
@@ -152,13 +150,10 @@ io.on("connection", async (socket) => {
             sender: data.sender,
             receiver: data.receiver,
           });
-        } else {
-          console.log("📝 Using EXISTING conversation:", conversation._id);
         }
 
         // Check if receiver is online
         const isReceiverOnline = onlineUser.has(data.receiver);
-        console.log("🟢 Receiver online?", isReceiverOnline);
 
         // Create and save message
         const message = new MessageModel({
@@ -171,7 +166,6 @@ io.on("connection", async (socket) => {
         });
 
         const savedMessage = await message.save();
-        console.log("✅ MESSAGE SAVED:", savedMessage._id);
 
         // Add message to conversation
         await ConversationModel.updateOne(
@@ -191,17 +185,13 @@ io.on("connection", async (socket) => {
           createdAt: savedMessage.createdAt,
         };
 
-        console.log("📤 EMITTING message_sent to sender:", data.sender);
         io.to(data.sender).emit("message_sent", messageToSend);
-
-        console.log("📤 EMITTING receive_message to receiver:", data.receiver);
         io.to(data.receiver).emit("receive_message", messageToSend);
 
         // Update sidebars
         await updateSidebarForUser(data.sender);
         await updateSidebarForUser(data.receiver);
 
-        console.log("✅ MESSAGE DELIVERY COMPLETE\n");
       } catch (error) {
         console.error("❌ NEW MESSAGE ERROR:", error);
         socket.emit("message_error", {
@@ -297,16 +287,139 @@ io.on("connection", async (socket) => {
         isTyping: data.isTyping
       });
       
-      // Send typing status to receiver
       if (onlineUser.has(data.receiver)) {
         io.to(data.receiver).emit("user_typing", {
           senderId: data.sender,
           isTyping: data.isTyping,
         });
-        console.log("✅ Typing indicator sent to:", data.receiver);
-      } else {
-        console.log("❌ Receiver not online:", data.receiver);
       }
+    });
+
+    // ============ GROUP EVENTS ============
+    
+    // Join group room
+    socket.on("join_group", async (groupId) => {
+      try {
+        socket.join(`group_${groupId}`);
+        console.log(`👥 User ${userId} joined group ${groupId}`);
+      } catch (error) {
+        console.error("Join group error:", error);
+      }
+    });
+
+    // Leave group room
+    socket.on("leave_group", (groupId) => {
+      socket.leave(`group_${groupId}`);
+      console.log(`👥 User ${userId} left group ${groupId}`);
+    });
+
+    // Send message to group
+    socket.on("group_message", async (data) => {
+      try {
+        const { groupId, text, imageUrl, videoUrl } = data;
+        console.log("📤 GROUP MESSAGE:", { groupId, from: userId });
+        
+        // Verify user is a member
+        const group = await GroupModel.findById(groupId);
+        if (!group || !group.members.includes(userId)) {
+          socket.emit("group_message_error", { 
+            message: "You are not a member of this group" 
+          });
+          return;
+        }
+
+        // Create message
+        const newMessage = new MessageModel({
+          text: text || "",
+          imageUrl: imageUrl || "",
+          videoUrl: videoUrl || "",
+          msgByUserId: userId,
+          groupId: groupId,
+        });
+
+        await newMessage.save();
+
+        // Update group's last message
+        group.lastMessage = newMessage._id;
+        await group.save();
+
+        // Populate message
+        const populatedMessage = await MessageModel.findById(newMessage._id)
+          .populate("msgByUserId", "name profile_pic");
+
+        // Emit to all group members
+        io.to(`group_${groupId}`).emit("group_new_message", {
+          groupId,
+          message: populatedMessage,
+        });
+
+        // Emit to sender confirmation
+        socket.emit("group_message_sent", {
+          groupId,
+          message: populatedMessage,
+        });
+
+        console.log("✅ Group message sent to group:", groupId);
+
+      } catch (error) {
+        console.error("Group message error:", error);
+        socket.emit("group_message_error", { 
+          message: "Failed to send message" 
+        });
+      }
+    });
+
+    // Get group messages
+    socket.on("group_messages", async (groupId) => {
+      try {
+        console.log("📜 LOADING GROUP MESSAGES:", groupId);
+        
+        // Verify user is a member
+        const group = await GroupModel.findById(groupId);
+        if (!group || !group.members.includes(userId)) {
+          socket.emit("group_messages_error", { 
+            message: "You are not a member of this group" 
+          });
+          return;
+        }
+
+        const messages = await MessageModel.find({ groupId })
+          .populate("msgByUserId", "name profile_pic")
+          .sort({ createdAt: 1 });
+
+        socket.emit("group_messages_loaded", {
+          groupId,
+          messages,
+        });
+
+        console.log("✅ Loaded", messages.length, "group messages");
+
+      } catch (error) {
+        console.error("Get group messages error:", error);
+        socket.emit("group_messages_error", { 
+          message: "Failed to load messages" 
+        });
+      }
+    });
+
+    // Group member update notification
+    socket.on("group_member_update", ({ groupId, action, updatedUserId }) => {
+      console.log("👥 GROUP MEMBER UPDATE:", { groupId, action, updatedUserId });
+      io.to(`group_${groupId}`).emit("group_member_changed", {
+        groupId,
+        action, // 'added' or 'removed'
+        userId: updatedUserId,
+      });
+    });
+
+    // Typing indicator for groups
+    socket.on("group_typing", ({ groupId, isTyping }) => {
+      socket.to(`group_${groupId}`).emit("group_user_typing", {
+        groupId,
+        userId: userId,
+        userName: user.name,
+        isTyping,
+      });
     });
 
     // Helper function to update sidebar
@@ -339,7 +452,7 @@ io.on("connection", async (socket) => {
     });
     socket.disconnect(true);
   }
-});
+}); // <-- This closes io.on('connection')
 
 module.exports = {
   app,

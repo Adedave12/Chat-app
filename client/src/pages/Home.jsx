@@ -7,6 +7,7 @@ import Sidebar from "../components/Sidebar";
 import api from "../helpers/api";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+
 const Home = () => {
   const user = useSelector((state) => state.user);
   const dispatch = useDispatch();
@@ -57,13 +58,13 @@ const Home = () => {
     
     switch(option) {
       case "sort":
-        toast.info("Sort feature coming soon!");
+        toast("Sort feature coming soon!");
         break;
       case "filter":
-        toast.info("Filter by groups feature coming soon!");
+        toast("Filter by groups feature coming soon!");
         break;
       case "search":
-        toast.info("Search messages feature coming soon!");
+        toast("Search messages feature coming soon!");
         break;
       case "archive":
         navigate("/archived");
@@ -75,21 +76,23 @@ const Home = () => {
 
   return (
     <div className="grid lg:grid-cols-[320px,1fr] h-screen max-h-screen bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-black">
+      {/* Sidebar - ALWAYS VISIBLE on mobile when basePath, hidden on desktop unless basePath */}
       <section className={`${!basePath && "hidden"} lg:block`}>
         <Sidebar />
       </section>
 
+      {/* Message/Other Pages */}
       <section className={`${basePath && "hidden"}`}>
         <Outlet />
       </section>
 
-      {/* Beautiful Welcome Screen - MOBILE FRIENDLY */}
+      {/* Beautiful Welcome Screen - HIDDEN ON MOBILE, VISIBLE ON DESKTOP */}
       <div
-        className={`flex justify-center items-center flex-col gap-4 md:gap-8 ${
-          !basePath ? "hidden" : "flex"
+        className={`justify-center items-center flex-col gap-4 md:gap-8 ${
+          !basePath ? "hidden" : "hidden lg:flex"
         } relative overflow-hidden p-4 md:p-8`}
       >
-        {/* Options Menu Button - Top Right */}
+        {/* Options Menu Button - ONLY VISIBLE ON DESKTOP (lg and above) */}
         <div className="absolute top-4 right-4 z-20 home-options-menu">
           <button
             onClick={() => setShowOptionsMenu(!showOptionsMenu)}
@@ -113,7 +116,7 @@ const Home = () => {
                 <span className="text-lg">↕️</span>
                 <div>
                   <p className="font-semibold">Sort Conversations</p>
-                  <p className="text-xs text-gray-500">By date or unread</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">By date or unread</p>
                 </div>
               </button>
               
@@ -124,7 +127,7 @@ const Home = () => {
                 <span className="text-lg">🔍</span>
                 <div>
                   <p className="font-semibold">Filter Chats</p>
-                  <p className="text-xs text-gray-500">By groups or tags</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">By groups or tags</p>
                 </div>
               </button>
               
@@ -135,7 +138,7 @@ const Home = () => {
                 <span className="text-lg">💬</span>
                 <div>
                   <p className="font-semibold">Search Messages</p>
-                  <p className="text-xs text-gray-500">Find in all chats</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Find in all chats</p>
                 </div>
               </button>
 
@@ -148,7 +151,7 @@ const Home = () => {
                 <span className="text-lg">📁</span>
                 <div>
                   <p className="font-semibold">Archived Chats</p>
-                  <p className="text-xs text-gray-500">View hidden chats</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">View hidden chats</p>
                 </div>
               </button>
             </motion.div>
@@ -300,7 +303,7 @@ const Home = () => {
           </motion.div>
         </motion.div>
 
-        {/* Floating Decorative Icons - Hidden on mobile */}
+        {/* Floating Decorative Icons */}
         <motion.div
           animate={{
             y: [0, -30, 0],
@@ -311,7 +314,7 @@ const Home = () => {
             repeat: Infinity,
             ease: "linear",
           }}
-          className="hidden lg:block absolute top-24 right-24 text-7xl opacity-20 pointer-events-none"
+          className="absolute top-24 right-24 text-7xl opacity-20 pointer-events-none"
         >
           📱
         </motion.div>
@@ -325,7 +328,7 @@ const Home = () => {
             repeat: Infinity,
             ease: "linear",
           }}
-          className="hidden lg:block absolute bottom-24 left-24 text-6xl opacity-20 pointer-events-none"
+          className="absolute bottom-24 left-24 text-6xl opacity-20 pointer-events-none"
         >
           ✨
         </motion.div>
@@ -339,7 +342,7 @@ const Home = () => {
             repeat: Infinity,
             ease: "linear",
           }}
-          className="hidden lg:block absolute top-1/2 right-12 text-5xl opacity-20 pointer-events-none"
+          className="absolute top-1/2 right-12 text-5xl opacity-20 pointer-events-none"
         >
           💫
         </motion.div>

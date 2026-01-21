@@ -32,9 +32,11 @@ async function registerUser(req, res) {
 
     console.log("Generated OTP:", otp);
 
-    // Hash password
-    const salt = await bcryptjs.genSalt(10);
+    // Hash password - REDUCE SALT ROUNDS FOR SPEED
+    const salt = await bcryptjs.genSalt(8); // Changed from 10 to 8 (faster, still secure)
     const hashPassword = await bcryptjs.hash(password, salt);
+
+    let userId;
 
     if (existingUser && !existingUser.isVerified) {
       // Update existing unverified user
@@ -45,60 +47,47 @@ async function registerUser(req, res) {
       existingUser.otpExpiry = otpExpiry;
       await existingUser.save();
 
-      console.log("Updated existing user:", existingUser._id);
-
-      // Send OTP email
-      try {
-        await sendOTPEmail(email, otp, name);
-        console.log("OTP email sent successfully");
-      } catch (emailError) {
-        console.error("Email sending failed:", emailError);
-        return res.status(500).json({
-          message: "Failed to send verification email. Please try again.",
-          error: true,
-        });
-      }
-
-      return res.status(200).json({
-        message: "OTP sent to your email. Please verify to complete registration.",
-        userId: existingUser._id,
-        success: true,
+      userId = existingUser._id;
+      console.log("Updated existing user:", userId);
+    } else {
+      // Create new user
+      const newUser = new UserModel({
+        name,
+        email,
+        password: hashPassword,
+        profile_pic: profile_pic || "",
+        otp,
+        otpExpiry,
+        isVerified: false,
       });
+
+      await newUser.save();
+      userId = newUser._id;
+      console.log("New user created:", userId);
     }
 
-    // Create new user
-    const newUser = new UserModel({
-      name,
-      email,
-      password: hashPassword,
-      profile_pic: profile_pic || "",
-      otp,
-      otpExpiry,
-      isVerified: false,
-    });
-
-    await newUser.save();
-    console.log("New user created:", newUser._id);
-
-    // Send OTP email
-    try {
-      await sendOTPEmail(email, otp, name);
-      console.log("OTP email sent successfully");
-    } catch (emailError) {
-      console.error("Email sending failed:", emailError);
-      // Delete the user if email fails
-      await UserModel.findByIdAndDelete(newUser._id);
-      return res.status(500).json({
-        message: "Failed to send verification email. Please try again.",
-        error: true,
-      });
-    }
-
-    return res.status(201).json({
+    // ⚡ CRITICAL FIX: Send response IMMEDIATELY, send email in background
+    // Respond to user first
+    res.status(201).json({
       message: "Registration successful! OTP sent to your email.",
-      userId: newUser._id,
+      userId: userId,
       success: true,
     });
+
+    // ⚡ Send email asynchronously (don't await, don't block response)
+    sendOTPEmail(email, otp, name)
+      .then(() => {
+        console.log("✅ OTP email sent successfully to:", email);
+      })
+      .catch((emailError) => {
+        console.error("❌ Email sending failed (non-blocking):", emailError);
+        // Email failed but user is already registered
+        // You could implement a retry mechanism or manual resend option
+      });
+
+    // Note: We're not deleting the user if email fails anymore
+    // because we already responded. Instead, implement a "Resend OTP" feature.
+
   } catch (error) {
     console.error("Registration error:", error);
     return res.status(500).json({

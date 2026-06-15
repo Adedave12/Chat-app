@@ -51,7 +51,7 @@ const Home = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showOptionsMenu]);
 
-  const basePath = location.pathname === "/";
+  const basePath = location.pathname === "/" || location.pathname === "/groups";
 
   const handleMenuOption = (option) => {
     setShowOptionsMenu(false);

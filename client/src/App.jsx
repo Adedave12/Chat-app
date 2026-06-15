@@ -122,6 +122,19 @@ const App = () => {
       }
     });
 
+    // Handle global notification sound for groups
+    socketConnection.on("group_new_message", (data) => {
+      if (data.message && data.message.msgByUserId && data.message.msgByUserId._id !== user._id) {
+        try {
+          const audio = new Audio('/notification.mp3');
+          audio.volume = 0.5;
+          audio.play().catch(err => console.log('Audio play failed:', err));
+        } catch {
+          console.log('Notification sound not available');
+        }
+      }
+    });
+
     // Handle disconnection
     socketConnection.on("disconnect", (reason) => {
       console.log("🔌 Socket disconnected:", reason);

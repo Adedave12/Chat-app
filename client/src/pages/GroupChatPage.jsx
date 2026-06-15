@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import moment from "moment";
 import Avatar from "../components/Avatar";
 import uploadFile from "../helpers/uploadFile";
-import backgroundImage from "../assets/wallapaper.jpeg";
+
 import api from "../helpers/api";
 
 const GroupChatPage = () => {
@@ -225,14 +225,11 @@ const GroupChatPage = () => {
   };
 
   return (
-    <div
-      style={{ backgroundImage: `url(${backgroundImage})` }}
-      className="bg-no-repeat bg-cover h-screen"
-    >
+    <div className="h-screen flex flex-col bg-[#09090b]">
       {/* Header */}
-      <header className="sticky top-0 h-16 bg-white dark:bg-gray-800 flex justify-between items-center px-4 shadow-md z-10 border-b border-gray-200 dark:border-gray-700">
+      <header className="sticky top-0 h-16 bg-zinc-900/80 backdrop-blur-xl flex justify-between items-center px-4 shadow-md z-10 border-b border-zinc-800/50">
         <div className="flex items-center gap-4">
-          <Link to="/groups" className="lg:hidden hover:text-primary transition-colors">
+          <Link to="/groups" className="lg:hidden hover:text-emerald-400 transition-colors">
             <FaAngleLeft size={25} />
           </Link>
           
@@ -241,10 +238,10 @@ const GroupChatPage = () => {
               {groupData?.name?.[0]?.toUpperCase() || "G"}
             </div>
             <div>
-              <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+              <h3 className="font-semibold text-lg text-zinc-100">
                 {groupData?.name || "Group"}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-zinc-400">
                 {typingUsers.length > 0
                   ? `${typingUsers.join(", ")} typing...`
                   : `${groupData?.members?.length || 0} members`}
@@ -256,31 +253,31 @@ const GroupChatPage = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate(`/groups/${groupId}/info`)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+            className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
           >
-            <FaInfoCircle size={22} className="text-gray-600 dark:text-gray-300" />
+            <FaInfoCircle size={22} className="text-zinc-400" />
           </button>
           
           <div className="relative">
             <button
               onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+              className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
             >
-              <HiDotsVertical size={22} className="text-gray-600 dark:text-gray-300" />
+              <HiDotsVertical size={22} className="text-zinc-400" />
             </button>
 
             {showOptionsMenu && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 w-48 py-2 z-30"
+                className="absolute right-0 top-12 bg-zinc-900 rounded-xl shadow-2xl border border-zinc-800 w-48 py-2 z-30"
               >
                 <button
                   onClick={() => {
                     navigate(`/groups/${groupId}/info`);
                     setShowOptionsMenu(false);
                   }}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
+                  className="w-full px-4 py-2 text-left hover:bg-zinc-800 transition-colors text-zinc-300"
                 >
                   Group Info
                 </button>
@@ -289,7 +286,7 @@ const GroupChatPage = () => {
                     toast("Exit group feature coming soon!");
                     setShowOptionsMenu(false);
                   }}
-                  className="w-full px-4 py-2 text-left hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-600 dark:text-red-400"
+                  className="w-full px-4 py-2 text-left hover:bg-zinc-800 transition-colors text-red-400"
                 >
                   Exit Group
                 </button>
@@ -300,10 +297,20 @@ const GroupChatPage = () => {
       </header>
 
       {/* Messages */}
-      <section className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative bg-slate-200/50 dark:bg-gray-900/50">
-        <div className="flex flex-col gap-2 py-4 px-2" ref={currentMessage}>
+      <section 
+        className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative"
+        style={{
+          backgroundImage: `url('/wallpaper.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      >
+        {/* Dark Overlay for Readability */}
+        <div className="absolute inset-0 bg-black/60 pointer-events-none z-0"></div>
+        <div className="flex flex-col gap-2 py-4 px-2 relative z-10" ref={currentMessage}>
           {allMessages.length === 0 && (
-            <div className="text-center text-gray-500 dark:text-gray-400 mt-10">
+            <div className="text-center text-zinc-500 mt-10">
               <p className="text-lg">No messages yet</p>
               <p className="text-sm">Be the first to send a message! 👋</p>
             </div>
@@ -312,14 +319,17 @@ const GroupChatPage = () => {
           {allMessages.map((msg) => (
             <div
               key={msg._id}
-              className={`p-3 rounded-2xl w-fit max-w-[280px] md:max-w-sm lg:max-w-md shadow-lg transition-all duration-300 hover:shadow-xl ${
-                user._id === msg.msgByUserId._id
-                  ? "ml-auto bg-gradient-to-r from-primary to-secondary text-white"
-                  : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              }`}
+              className={`
+                p-3 rounded-2xl w-fit max-w-[280px] md:max-w-sm lg:max-w-md transition-all duration-300
+                ${
+                  user._id === msg.msgByUserId._id
+                    ? "ml-auto bg-emerald-600 text-white rounded-br-sm"
+                    : "bg-zinc-800 text-zinc-100 rounded-bl-sm border border-zinc-700/50"
+                }
+              `}
             >
               {user._id !== msg.msgByUserId._id && (
-                <p className="text-xs font-semibold mb-1 text-primary">
+                <p className="text-xs font-semibold mb-1 text-emerald-400">
                   {msg.msgByUserId.name}
                 </p>
               )}
@@ -402,30 +412,30 @@ const GroupChatPage = () => {
       </section>
 
       {/* Input Section */}
-      <section className="h-16 bg-white dark:bg-gray-800 flex items-center px-4 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+      <section className="h-16 bg-zinc-900/80 backdrop-blur-xl flex items-center px-4 border-t border-zinc-800/50 shadow-lg">
         <div className="relative">
           <button
             onClick={() => setOpenImageVideoUpload((prev) => !prev)}
-            className="flex justify-center items-center w-10 h-10 rounded-full hover:bg-primary/20 dark:hover:bg-primary/30 transition-all text-gray-600 dark:text-gray-300 hover:text-primary"
+            className="flex justify-center items-center w-10 h-10 rounded-full hover:bg-zinc-800 transition-all text-zinc-400 hover:text-emerald-400"
           >
             <FaPlus size={18} />
           </button>
 
           {openImageVideoUpload && (
-            <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-xl absolute bottom-14 w-40 p-2 z-20 border border-gray-200 dark:border-gray-700">
+            <div className="bg-zinc-900 shadow-2xl rounded-xl absolute bottom-14 w-40 p-2 z-20 border border-zinc-800">
               <label
                 htmlFor="uploadImage"
-                className="flex items-center px-3 py-2 gap-3 hover:bg-primary/10 dark:hover:bg-primary/20 cursor-pointer rounded-lg transition-all"
+                className="flex items-center px-3 py-2 gap-3 hover:bg-zinc-800 cursor-pointer rounded-lg transition-all"
               >
-                <FaImage className="text-primary" size={18} />
-                <p className="text-gray-700 dark:text-gray-300">Image</p>
+                <FaImage className="text-emerald-400" size={18} />
+                <p className="text-zinc-300">Image</p>
               </label>
               <label
                 htmlFor="uploadVideo"
-                className="flex items-center px-3 py-2 gap-3 hover:bg-primary/10 dark:hover:bg-primary/20 cursor-pointer rounded-lg transition-all"
+                className="flex items-center px-3 py-2 gap-3 hover:bg-zinc-800 cursor-pointer rounded-lg transition-all"
               >
-                <FaVideo className="text-purple-600" size={18} />
-                <p className="text-gray-700 dark:text-gray-300">Video</p>
+                <FaVideo className="text-purple-400" size={18} />
+                <p className="text-zinc-300">Video</p>
               </label>
               <input
                 type="file"
@@ -449,15 +459,16 @@ const GroupChatPage = () => {
           <input
             type="text"
             placeholder="Type a message..."
-            className="flex-1 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary transition-all"
+            className="flex-1 px-4 py-2 rounded-full bg-zinc-800 text-zinc-100 placeholder-zinc-500 outline-none focus:ring-1 focus:ring-emerald-500 transition-all border border-zinc-700"
             value={message.text}
             onChange={handleTyping}
           />
           <button
             type="submit"
-            className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:shadow-glow transition-all flex items-center justify-center"
+            className="w-10 h-10 rounded-full bg-emerald-600 text-white hover:bg-emerald-500 transition-colors flex items-center justify-center disabled:opacity-50"
+            disabled={!message.text && !message.imageUrl && !message.videoUrl}
           >
-            <IoMdSend size={20} />
+            <IoMdSend size={20} className="ml-1" />
           </button>
         </form>
       </section>

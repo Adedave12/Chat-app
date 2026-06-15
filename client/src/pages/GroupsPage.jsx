@@ -1,186 +1,89 @@
-/* eslint-disable no-unused-vars */
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { IoArrowBack, IoAddCircle } from "react-icons/io5";
-import { FaUsers } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
-import api from "../helpers/api";
-import Avatar from "../components/Avatar";
-import CreateGroupModal from "../components/CreateGroupModal";
 
 const GroupsPage = () => {
-  const navigate = useNavigate();
   const user = useSelector((state) => state.user);
-  const [groups, setGroups] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-
-  const fetchGroups = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get("/api/groups");
-      
-      if (response.data.success) {
-        setGroups(response.data.data);
-      }
-    } catch (error) {
-      console.error("Fetch groups error:", error);
-      toast.error("Failed to load groups");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchGroups();
-  }, []);
-
-  const handleGroupCreated = (newGroup) => {
-    setGroups((prev) => [newGroup, ...prev]);
-    setShowCreateModal(false);
-    toast.success("Group created successfully!");
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-purple-50 dark:from-gray-900 dark:via-black dark:to-purple-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate("/")}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-            >
-              <IoArrowBack size={24} className="text-gray-700 dark:text-gray-300" />
-            </button>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              My Groups
-            </h1>
-          </div>
-
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="btn-primary flex items-center gap-2"
-          >
-            <IoAddCircle size={20} />
-            <span className="hidden sm:inline">Create Group</span>
-          </button>
-        </div>
-      </header>
-
+    <div className="justify-center items-center flex-col gap-4 md:gap-8 hidden lg:flex h-screen max-h-screen relative overflow-hidden p-4 md:p-8 bg-[#09090b]">
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full"></div>
-          </div>
-        ) : groups.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-20"
-          >
-            <FaUsers size={80} className="mx-auto text-gray-300 dark:text-gray-600 mb-6" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-              No groups yet
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-8">
-              Create your first group to start chatting with multiple people
-            </p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="btn-primary"
-            >
-              <IoAddCircle size={20} className="inline mr-2" />
-              Create Your First Group
-            </button>
-          </motion.div>
-        ) : (
-          <div className="grid gap-4">
-            {groups.map((group, index) => (
-              <motion.div
-                key={group._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => navigate(`/groups/${group._id}`)}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4 hover:shadow-xl transition-all cursor-pointer border border-gray-100 dark:border-gray-700"
-              >
-                <div className="flex items-center gap-4">
-                  {/* Group Icon */}
-                  <div className="relative">
-                    {group.groupIcon ? (
-                      <img
-                        src={group.groupIcon}
-                        alt={group.name}
-                        className="w-16 h-16 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                        <FaUsers size={28} className="text-white" />
-                      </div>
-                    )}
-                    
-                    {/* Admin badge */}
-                    {group.admin._id === user._id && (
-                      <div className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full p-1">
-                        <span className="text-xs font-bold text-white">👑</span>
-                      </div>
-                    )}
-                  </div>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6 }}
+        className="relative z-10 text-center max-w-2xl w-full px-4"
+      >
+        {/* Animated Icon */}
+        <motion.div
+          animate={{
+            y: [0, -20, 0],
+            rotate: [0, 5, -5, 0],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          className="mb-4 md:mb-8"
+        >
+          <div className="text-6xl md:text-8xl drop-shadow-2xl">👥</div>
+        </motion.div>
 
-                  {/* Group Info */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg text-gray-900 dark:text-white truncate">
-                      {group.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                      {group.description || "No description"}
-                    </p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      <span>{group.members.length} members</span>
-                      {group.lastMessage && (
-                        <span className="truncate">
-                          Last message: {new Date(group.updatedAt).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+        {/* Title */}
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-3xl md:text-5xl lg:text-6xl font-black mb-4 md:mb-6 bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent leading-tight"
+        >
+          Groups Hub,
+          <br />
+          <span className="text-2xl md:text-4xl lg:text-5xl">{user.name}</span>
+        </motion.h1>
 
-                  {/* Members Preview */}
-                  <div className="hidden sm:flex items-center -space-x-2">
-                    {group.members.slice(0, 3).map((member, idx) => (
-                      <Avatar
-                        key={member._id}
-                        imageUrl={member.profile_pic}
-                        name={member.name}
-                        userId={member._id}
-                        width={32}
-                        height={32}
-                      />
-                    ))}
-                    {group.members.length > 3 && (
-                      <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300">
-                        +{group.members.length - 3}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
+        {/* Subtitle */}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="text-base md:text-xl text-zinc-400 mb-6 md:mb-8 leading-relaxed font-light"
+        >
+          Select a group from the sidebar or{" "}
+          <span className="font-semibold text-zinc-200">create a new group</span> to chat with everyone
+        </motion.p>
 
-      {/* Create Group Modal */}
-      {showCreateModal && (
-        <CreateGroupModal
-          onClose={() => setShowCreateModal(false)}
-          onGroupCreated={handleGroupCreated}
-        />
-      )}
+        {/* Quick Tips */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="mt-8 md:mt-12 bg-zinc-900/50 backdrop-blur-md border border-zinc-800/50 rounded-2xl p-4 md:p-6 text-left hover:bg-zinc-900 transition-colors inline-block"
+        >
+          <p className="text-xs md:text-sm text-zinc-400 font-medium">
+            <span className="text-zinc-200">💡 Quick Tip:</span> Click the{" "}
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-zinc-800 rounded text-zinc-300 font-semibold text-xs border border-zinc-700">
+              + Create Group
+            </span>{" "}
+            button in the sidebar to start a new community!
+          </p>
+        </motion.div>
+      </motion.div>
+
+      {/* Floating Decorative Icons */}
+      <motion.div
+        animate={{ y: [0, -30, 0], rotate: [0, 360] }}
+        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+        className="absolute top-24 right-24 text-7xl opacity-20 pointer-events-none"
+      >
+        🌟
+      </motion.div>
+      <motion.div
+        animate={{ y: [0, 30, 0], rotate: [0, -360] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        className="absolute bottom-24 left-24 text-6xl opacity-20 pointer-events-none"
+      >
+        ✨
+      </motion.div>
     </div>
   );
 };

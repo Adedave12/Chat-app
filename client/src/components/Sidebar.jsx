@@ -5,7 +5,8 @@ import {
 } from "react-icons/hi2";
 import { FaUserPlus, FaUsers, FaCog } from "react-icons/fa";
 import { MdArchive } from "react-icons/md";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import api from "../helpers/api";
 import Avatar from "./Avatar";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
@@ -13,6 +14,7 @@ import { FiArrowUpLeft, FiDownload } from "react-icons/fi";
 import SearchUser from "./SearchUser";
 import { FaImage, FaVideo } from "react-icons/fa6";
 import InstallModal from "./InstallModal";
+import CreateGroupModal from "./CreateGroupModal";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -23,6 +25,10 @@ const Sidebar = () => {
   const [openSearchUser, setOpenSearchUser] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [showInstallModal, setShowInstallModal] = useState(false);
+  const location = useLocation();
+  const isGroupsMode = location.pathname.startsWith('/groups');
+  const [allGroups, setAllGroups] = useState([]);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
   const socketConnection = useSelector(
     (state) => state?.user?.socketConnection
   );
@@ -40,6 +46,22 @@ const Sidebar = () => {
       setShowInstallModal(true);
     }
   };
+
+  useEffect(() => {
+    if (isGroupsMode) {
+      const fetchGroups = async () => {
+        try {
+          const response = await api.get("/api/groups");
+          if (response.data.success) {
+            setAllGroups(response.data.data);
+          }
+        } catch (error) {
+          console.error("Fetch groups error:", error);
+        }
+      };
+      fetchGroups();
+    }
+  }, [isGroupsMode]);
 
   useEffect(() => {
     if (socketConnection && user && user._id) {
@@ -137,17 +159,23 @@ const Sidebar = () => {
           </NavLink>
 
           <div
-            onClick={() => setOpenSearchUser(true)}
+            onClick={() => isGroupsMode ? setShowCreateGroup(true) : setOpenSearchUser(true)}
             className="w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl text-zinc-400 hover:bg-zinc-800 transition-all duration-300"
-            title="Add Friends"
+            title={isGroupsMode ? "Create Group" : "Add Friends"}
           >
             <FaUserPlus size={20} />
           </div>
 
           <NavLink
             to="/groups"
-            className="w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl text-zinc-400 hover:bg-zinc-800 transition-all duration-300"
-            title="Groups (Coming Soon)"
+            className={({ isActive }) =>
+              `w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl transition-all duration-300 ${
+                isActive
+                  ? "bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)]"
+                  : "text-zinc-400 hover:bg-zinc-800"
+              }`
+            }
+            title="Groups"
           >
             <FaUsers size={20} />
           </NavLink>
@@ -207,7 +235,7 @@ const Sidebar = () => {
         {/* Header with 3-dot menu (VISIBLE ON MOBILE, HIDDEN ON DESKTOP) */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-800/50">
           <h2 className="text-2xl font-bold bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">
-            Messages
+            {isGroupsMode ? "Groups" : "Messages"}
           </h2>
 
           {/* 3-Dot Menu - Only visible on mobile (hidden on lg screens) */}
@@ -278,7 +306,7 @@ const Sidebar = () => {
         </div>
 
         <div className="h-[calc(100vh-65px)] overflow-x-hidden overflow-y-auto scrollbar">
-          {allUser.length === 0 && (
+          {!isGroupsMode && allUser.length === 0 && (
             <div className="mt-12">
               <div className="flex justify-center items-center my-4 text-zinc-600">
                 <FiArrowUpLeft size={50} />
@@ -292,7 +320,21 @@ const Sidebar = () => {
             </div>
           )}
 
-          {allUser.map((conv) => {
+          {isGroupsMode && allGroups.length === 0 && (
+            <div className="mt-12">
+              <div className="flex justify-center items-center my-4 text-zinc-600">
+                <FiArrowUpLeft size={50} />
+              </div>
+              <div>
+                <p className="text-lg text-center text-zinc-500 px-4">
+                  Click <strong className="text-indigo-500">Create Group</strong> to
+                  start a group chat
+                </p>
+              </div>
+            </div>
+          )}
+
+          {!isGroupsMode && allUser.map((conv) => {
             return (
               <NavLink
                 to={"/" + conv?.userDetails?._id}
@@ -349,12 +391,63 @@ const Sidebar = () => {
               </NavLink>
             );
           })}
+
+          {isGroupsMode && allGroups.map((group) => {
+            return (
+              <NavLink
+                to={"/groups/" + group?._id}
+                key={group?._id}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 py-4 px-4 border-l-4 transition-all duration-300 ${
+                    isActive
+                      ? "bg-zinc-800/50 border-indigo-500"
+                      : "border-transparent hover:bg-zinc-800/30"
+                  }`
+                }
+              >
+                <div className="relative">
+                  {group.groupIcon ? (
+                    <img
+                      src={group.groupIcon}
+                      alt={group.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                      <FaUsers size={20} className="text-white" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-ellipsis line-clamp-1 font-semibold text-zinc-100">
+                    {group?.name}
+                  </h3>
+                  <div className="text-zinc-500 text-sm flex items-center gap-1">
+                    <p className="text-ellipsis line-clamp-1 italic">
+                      {group?.members?.length || 0} members
+                    </p>
+                  </div>
+                </div>
+              </NavLink>
+            );
+          })}
         </div>
       </div>
 
       {/* Search User Modal */}
       {openSearchUser && (
         <SearchUser onClose={() => setOpenSearchUser(false)} />
+      )}
+
+      {/* Create Group Modal */}
+      {showCreateGroup && (
+        <CreateGroupModal
+          onClose={() => setShowCreateGroup(false)}
+          onGroupCreated={(newGroup) => {
+            setAllGroups((prev) => [newGroup, ...prev]);
+            setShowCreateGroup(false);
+          }}
+        />
       )}
 
       {/* Install App Modal */}

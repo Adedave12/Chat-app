@@ -429,9 +429,9 @@ const MessagePage = () => {
                     <span className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></span>
                   </span>
                 </span>
-              ) : dataUser.online ? (
+              ) : user.onlineUser.includes(params.userId) ? (
                 <span className="text-green-500 font-medium flex items-center gap-1">
-                  <span></span>
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></span>
                   online
                 </span>
               ) : (

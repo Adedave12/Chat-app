@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { IoClose, IoCamera, IoCheckmark } from "react-icons/io5";
 import { FaSearch, FaUsers } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import api from "../helpers/api";
 import uploadFile from "../helpers/uploadFile";
 import Avatar from "./Avatar";

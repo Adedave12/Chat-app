@@ -10,12 +10,15 @@ import { IoCheckmarkDoneSharp, IoCheckmarkSharp } from "react-icons/io5";
 import { IoMdSend, IoIosClose } from "react-icons/io";
 import uploadFile from "../helpers/uploadFile";
 import Loading from "./Loading";
-import backgroundImage from "../assets/wallapaper.jpeg";
 import moment from "moment";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
+import api from "../helpers/api";
+import { setToken, logout } from "../redux/userSlice";
+import { useDispatch } from "react-redux";
 
 const MessagePage = () => {
   const params = useParams();
+  const dispatch = useDispatch();
   const socketConnection = useSelector((state) => state?.user?.socketConnection);
   const user = useSelector((state) => state?.user);
   const [dataUser, setDataUser] = useState({
@@ -36,7 +39,44 @@ const MessagePage = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState(null);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [isBlockedLocal, setIsBlockedLocal] = useState(false);
+  const [isArchivedLocal, setIsArchivedLocal] = useState(false);
   const currentMessage = useRef(null);
+
+  useEffect(() => {
+    if (user?.blockedUsers) {
+      setIsBlockedLocal(user.blockedUsers.includes(params.userId));
+    }
+    if (user?.archivedUsers) {
+      setIsArchivedLocal(user.archivedUsers.includes(params.userId));
+    }
+  }, [user, params.userId]);
+
+  const toggleBlockUser = async () => {
+    try {
+      const response = await api.post("/api/toggle-block-user", { targetUserId: params.userId });
+      if (response.data.success) {
+        setIsBlockedLocal(response.data.isBlocked);
+        toast.success(response.data.message);
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to toggle block");
+    }
+    setShowOptionsMenu(false);
+  };
+
+  const toggleArchiveUser = async () => {
+    try {
+      const response = await api.post("/api/toggle-archive-user", { targetUserId: params.userId });
+      if (response.data.success) {
+        setIsArchivedLocal(response.data.isArchived);
+        toast.success(response.data.message);
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to toggle archive");
+    }
+    setShowOptionsMenu(false);
+  };
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -124,7 +164,7 @@ const MessagePage = () => {
 
     if (msg.seen) {
       return (
-        <span className="text-blue-500 ml-1" title="Seen">
+        <span className="text-sky-400 ml-1" title="Seen">
           <IoCheckmarkDoneSharp size={16} />
         </span>
       );
@@ -196,15 +236,6 @@ const MessagePage = () => {
         }
         return [...prev, newMessage];
       });
-
-      // Play notification sound
-      try {
-        const audio = new Audio('/notification.mp3');
-        audio.volume = 0.5; // Set volume to 50%
-        audio.play().catch(err => console.log('Audio play failed:', err));
-      } catch {
-        console.log('Notification sound not available');
-      }
 
       // Mark as seen
       socketConnection.emit("seen", newMessage.msgByUserId);
@@ -366,12 +397,9 @@ const MessagePage = () => {
   };
 
   return (
-    <div
-      style={{ backgroundImage: `url(${backgroundImage})` }}
-      className="bg-no-repeat bg-cover h-screen"
-    >
+    <div className="h-screen flex flex-col bg-[#09090b]">
       {/* Header */}
-      <header className="sticky top-0 h-16 bg-white dark:bg-gray-800 flex justify-between items-center px-4 shadow-md z-10 border-b border-gray-200 dark:border-gray-700">
+      <header className="sticky top-0 h-16 bg-zinc-900/80 backdrop-blur-xl flex justify-between items-center px-4 shadow-md z-10 border-b border-zinc-800/50">
         <div className="flex items-center gap-4">
           <Link to={"/"} className="lg:hidden hover:text-primary transition-colors" title="Go back">
             <FaAngleLeft size={25} />
@@ -386,7 +414,7 @@ const MessagePage = () => {
             />
           </div>
           <div>
-            <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+            <h3 className="font-semibold text-lg text-zinc-100">
               {dataUser?.name || "Loading..."}
             </h3>
             <p className="text-sm">
@@ -413,7 +441,7 @@ const MessagePage = () => {
         <div className="relative">
           <button
             onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-            className="cursor-pointer hover:text-primary transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+            className="cursor-pointer hover:text-indigo-400 transition-colors p-2 hover:bg-zinc-800 rounded-full text-zinc-400"
             title="Options"
           >
             <HiDotsVertical size={22} />
@@ -421,38 +449,20 @@ const MessagePage = () => {
 
           {/* Options Menu */}
           {showOptionsMenu && (
-            <div className="absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 w-48 py-2 z-20">
+            <div className="absolute right-0 top-12 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl w-48 py-2 z-20">
               <button
-                onClick={() => {
-                  toast.info("Archive feature coming soon!");
-                  setShowOptionsMenu(false);
-                }}
-                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300"
+                onClick={toggleArchiveUser}
+                className="w-full px-4 py-2 text-left hover:bg-zinc-800 transition-colors flex items-center gap-3 text-zinc-300"
               >
                 <span className="text-lg">📁</span>
-                Archive Chat
+                {isArchivedLocal ? "Unarchive Chat" : "Archive Chat"}
               </button>
               <button
-                onClick={() => {
-                  toast.info("Block feature coming soon!");
-                  setShowOptionsMenu(false);
-                }}
-                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300"
+                onClick={toggleBlockUser}
+                className="w-full px-4 py-2 text-left hover:bg-zinc-800 transition-colors flex items-center gap-3 text-red-400"
               >
                 <span className="text-lg">🚫</span>
-                Block User
-              </button>
-              <button
-                onClick={() => {
-                  if (confirm("Are you sure you want to delete this conversation?")) {
-                    toast.info("Delete feature coming soon!");
-                  }
-                  setShowOptionsMenu(false);
-                }}
-                className="w-full px-4 py-2 text-left hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-3 text-red-600 dark:text-red-400"
-              >
-                <span className="text-lg">🗑️</span>
-                Delete Chat
+                {isBlockedLocal ? "Unblock User" : "Block User"}
               </button>
             </div>
           )}
@@ -460,10 +470,10 @@ const MessagePage = () => {
       </header>
 
       {/* Messages Section */}
-      <section className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative bg-slate-200/50 dark:bg-gray-900/50">
+      <section className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative bg-transparent">
         <div className="flex flex-col gap-2 py-4 px-2" ref={currentMessage}>
           {allMessage.length === 0 && (
-            <div className="text-center text-gray-500 dark:text-gray-400 mt-10">
+            <div className="text-center text-zinc-500 mt-10">
               <p className="text-lg">No messages yet</p>
               <p className="text-sm">Start the conversation! 👋</p>
             </div>
@@ -474,11 +484,11 @@ const MessagePage = () => {
               <div
                 key={msg._id || index}
                 className={`
-                  p-3 rounded-2xl w-fit max-w-[280px] md:max-w-sm lg:max-w-md shadow-lg transition-all duration-300 hover:shadow-xl
+                  p-3 rounded-2xl w-fit max-w-[280px] md:max-w-sm lg:max-w-md transition-all duration-300
                   ${
                     user._id === msg.msgByUserId
-                      ? "ml-auto bg-gradient-to-r from-primary to-secondary text-white"
-                      : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      ? "ml-auto bg-emerald-600 text-white rounded-br-sm"
+                      : "bg-zinc-800 text-zinc-100 rounded-bl-sm border border-zinc-700/50"
                   }
                 `}
               >
@@ -562,71 +572,80 @@ const MessagePage = () => {
       </section>
 
       {/* Send Message Section */}
-      <section className="h-16 bg-white dark:bg-gray-800 flex items-center px-4 border-t border-gray-200 dark:border-gray-700 shadow-lg">
-        <div className="relative">
-          <button
-            onClick={handleUploadImageVideoOpen}
-            className="flex justify-center items-center w-10 h-10 rounded-full hover:bg-primary/20 dark:hover:bg-primary/30 transition-all text-gray-600 dark:text-gray-300 hover:text-primary"
-          >
-            <FaPlus title="Add Image/Video" size={18} />
-          </button>
+      <section className="h-16 bg-zinc-900/80 backdrop-blur-xl flex items-center px-4 border-t border-zinc-800/50 shadow-lg">
+        {isBlockedLocal ? (
+          <div className="w-full text-center text-gray-500 font-medium py-2">
+            You have blocked this user. Unblock them to send messages.
+          </div>
+        ) : (
+          <>
+            <div className="relative">
+              <button
+                onClick={handleUploadImageVideoOpen}
+                className="flex justify-center items-center w-10 h-10 rounded-full hover:bg-zinc-800 transition-all text-zinc-400 hover:text-indigo-400"
+              >
+                <FaPlus title="Add Image/Video" size={18} />
+              </button>
 
-          {openImageVideoUpload && (
-            <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-xl absolute bottom-14 w-40 p-2 z-20 border border-gray-200 dark:border-gray-700">
-              <form>
-                <label
-                  htmlFor="uploadImage"
-                  className="flex items-center px-3 py-2 gap-3 hover:bg-primary/10 dark:hover:bg-primary/20 cursor-pointer rounded-lg transition-all"
-                >
-                  <div className="text-primary">
-                    <FaImage size={18} />
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300">Image</p>
-                </label>
-                <label
-                  htmlFor="uploadVideo"
-                  className="flex items-center px-3 py-2 gap-3 hover:bg-primary/10 dark:hover:bg-primary/20 cursor-pointer rounded-lg transition-all"
-                >
-                  <div className="text-purple-600">
-                    <FaVideo size={18} />
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300">Video</p>
-                </label>
-                <input
-                  type="file"
-                  id="uploadImage"
-                  accept="image/*"
-                  onChange={handleUploadImage}
-                  className="hidden"
-                />
-                <input
-                  type="file"
-                  id="uploadVideo"
-                  accept="video/*"
-                  onChange={handleUploadVideo}
-                  className="hidden"
-                />
-              </form>
+              {openImageVideoUpload && (
+                <div className="bg-zinc-900 shadow-2xl rounded-xl absolute bottom-14 w-40 p-2 z-20 border border-zinc-800">
+                  <form>
+                    <label
+                      htmlFor="uploadImage"
+                      className="flex items-center px-3 py-2 gap-3 hover:bg-zinc-800 cursor-pointer rounded-lg transition-all"
+                    >
+                      <div className="text-indigo-400">
+                        <FaImage size={18} />
+                      </div>
+                      <p className="text-zinc-300">Image</p>
+                    </label>
+                    <label
+                      htmlFor="uploadVideo"
+                      className="flex items-center px-3 py-2 gap-3 hover:bg-zinc-800 cursor-pointer rounded-lg transition-all"
+                    >
+                      <div className="text-purple-400">
+                        <FaVideo size={18} />
+                      </div>
+                      <p className="text-zinc-300">Video</p>
+                    </label>
+                    <input
+                      type="file"
+                      id="uploadImage"
+                      accept="image/*"
+                      onChange={handleUploadImage}
+                      className="hidden"
+                    />
+                    <input
+                      type="file"
+                      id="uploadVideo"
+                      accept="video/*"
+                      onChange={handleUploadVideo}
+                      className="hidden"
+                    />
+                  </form>
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        <form className="h-full w-full flex gap-2 items-center" onSubmit={handleSendMessage}>
-          <input
-            type="text"
-            placeholder="Type your message..."
-            className="flex-1 px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary transition-all"
-            value={message.text}
-            onChange={handleOnchange}
-          />
-          <button
-            type="submit"
-            title="Send"
-            className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary text-white hover:shadow-glow transition-all flex items-center justify-center"
-          >
-            <IoMdSend size={20} />
-          </button>
-        </form>
+            <form className="h-full w-full flex gap-2 items-center" onSubmit={handleSendMessage}>
+              <input
+                type="text"
+                placeholder="Message..."
+                className="flex-1 px-4 py-2 rounded-full bg-zinc-800 text-zinc-100 placeholder-zinc-500 outline-none focus:ring-1 focus:ring-indigo-500 transition-all border border-zinc-700"
+                value={message.text}
+                onChange={handleOnchange}
+              />
+              <button
+                type="submit"
+                title="Send"
+                className="w-10 h-10 rounded-full bg-indigo-600 text-white hover:bg-indigo-500 transition-colors flex items-center justify-center disabled:opacity-50"
+                disabled={!message.text && !message.imageUrl && !message.videoUrl}
+              >
+                <IoMdSend size={20} className="ml-1" />
+              </button>
+            </form>
+          </>
+        )}
       </section>
     </div>
   );

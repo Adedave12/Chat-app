@@ -1,6 +1,6 @@
 const GroupModel = require("../models/GroupModel");
 const UserModel = require("../models/UserModel");
-const MessageModel = require("../models/MessageModel");
+const { MessageModel } = require("../models/ConversationModel");
 
 // Create a new group
 async function createGroup(req, res) {

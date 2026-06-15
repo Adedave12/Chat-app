@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { IoSearchOutline } from "react-icons/io5";
 import Loading from "./Loading";
 import UserSearchCard from "./UserSearchCard";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import axios from "axios";
 import { IoClose } from "react-icons/io5";
 import { useSelector } from "react-redux"; // Add this import
@@ -42,7 +42,7 @@ const SearchUser = ({ onClose }) => {
   }, [search]);
 
   return (
-    <div className="fixed top-0 bottom-0 left-0 right-0 bg-slate-700 bg-opacity-40 p-2 z-10  ">
+    <div className="fixed top-0 bottom-0 left-0 right-0 bg-slate-700 bg-opacity-40 p-2 z-50  ">
       <div className="w-full max-w-lg mx-auto mt-10 dark:text-slate-900 ">
         {/* Input search user */}
         <div className="bg-white rounded overflow-hidden h-14 flex ">

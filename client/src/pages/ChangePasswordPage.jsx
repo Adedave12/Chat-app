@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { IoArrowBack, IoEyeSharp, IoEyeOffSharp } from "react-icons/io5";
 import { BiLockAlt } from "react-icons/bi";
 import { motion } from "framer-motion";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import axios from "axios";
 import ConfirmationDialog from "../components/ConfirmationDialog";
 

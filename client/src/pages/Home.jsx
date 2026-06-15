@@ -6,7 +6,7 @@ import { HiDotsVertical } from "react-icons/hi";
 import Sidebar from "../components/Sidebar";
 import api from "../helpers/api";
 import { motion } from "framer-motion";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 const Home = () => {
   const user = useSelector((state) => state.user);
@@ -75,7 +75,7 @@ const Home = () => {
   };
 
   return (
-    <div className="grid lg:grid-cols-[320px,1fr] h-screen max-h-screen bg-gradient-to-br from-gray-50 to-purple-50 dark:from-gray-900 dark:to-black">
+    <div className="grid lg:grid-cols-[320px,1fr] h-screen max-h-screen bg-transparent">
       {/* Sidebar - ALWAYS VISIBLE on mobile when basePath, hidden on desktop unless basePath */}
       <section className={`${!basePath && "hidden"} lg:block`}>
         <Sidebar />
@@ -90,16 +90,16 @@ const Home = () => {
       <div
         className={`justify-center items-center flex-col gap-4 md:gap-8 ${
           !basePath ? "hidden" : "hidden lg:flex"
-        } relative overflow-hidden p-4 md:p-8`}
+        } relative overflow-hidden p-4 md:p-8 bg-[#09090b]`}
       >
         {/* Options Menu Button - ONLY VISIBLE ON DESKTOP (lg and above) */}
         <div className="absolute top-4 right-4 z-20 home-options-menu">
           <button
             onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-            className="p-3 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:shadow-xl transition-all hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="p-3 bg-zinc-900/50 rounded-full shadow-lg hover:shadow-xl transition-all hover:bg-zinc-800 border border-zinc-800/50 backdrop-blur-md"
             title="Options"
           >
-            <HiDotsVertical size={22} className="text-gray-700 dark:text-gray-300" />
+            <HiDotsVertical size={22} className="text-zinc-300" />
           </button>
 
           {/* Options Dropdown */}
@@ -107,100 +107,55 @@ const Home = () => {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="absolute right-0 top-14 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 w-56 py-2 z-30"
+              className="absolute right-0 top-14 bg-zinc-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-zinc-800 w-56 py-2 z-30"
             >
               <button
                 onClick={() => handleMenuOption("sort")}
-                className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300"
+                className="w-full px-4 py-3 text-left hover:bg-zinc-800/80 transition-colors flex items-center gap-3 text-zinc-300"
               >
                 <span className="text-lg">↕️</span>
                 <div>
-                  <p className="font-semibold">Sort Conversations</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">By date or unread</p>
+                  <p className="font-semibold text-zinc-100">Sort Conversations</p>
+                  <p className="text-xs text-zinc-500">By date or unread</p>
                 </div>
               </button>
               
               <button
                 onClick={() => handleMenuOption("filter")}
-                className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300"
+                className="w-full px-4 py-3 text-left hover:bg-zinc-800/80 transition-colors flex items-center gap-3 text-zinc-300"
               >
                 <span className="text-lg">🔍</span>
                 <div>
-                  <p className="font-semibold">Filter Chats</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">By groups or tags</p>
+                  <p className="font-semibold text-zinc-100">Filter Chats</p>
+                  <p className="text-xs text-zinc-500">By groups or tags</p>
                 </div>
               </button>
               
               <button
                 onClick={() => handleMenuOption("search")}
-                className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300"
+                className="w-full px-4 py-3 text-left hover:bg-zinc-800/80 transition-colors flex items-center gap-3 text-zinc-300"
               >
                 <span className="text-lg">💬</span>
                 <div>
-                  <p className="font-semibold">Search Messages</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Find in all chats</p>
+                  <p className="font-semibold text-zinc-100">Search Messages</p>
+                  <p className="text-xs text-zinc-500">Find in all chats</p>
                 </div>
               </button>
 
-              <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+              <div className="border-t border-zinc-800 my-2"></div>
               
               <button
                 onClick={() => handleMenuOption("archive")}
-                className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300"
+                className="w-full px-4 py-3 text-left hover:bg-zinc-800/80 transition-colors flex items-center gap-3 text-zinc-300"
               >
                 <span className="text-lg">📁</span>
                 <div>
-                  <p className="font-semibold">Archived Chats</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">View hidden chats</p>
+                  <p className="font-semibold text-zinc-100">Archived Chats</p>
+                  <p className="text-xs text-zinc-500">View hidden chats</p>
                 </div>
               </button>
             </motion.div>
           )}
-        </div>
-
-        {/* Animated Gradient Orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{
-              x: [0, 100, 0],
-              y: [0, 50, 0],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 20,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute top-20 left-20 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30"
-          />
-          <motion.div
-            animate={{
-              x: [0, -100, 0],
-              y: [0, -50, 0],
-              scale: [1, 1.3, 1],
-            }}
-            transition={{
-              duration: 25,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 2,
-            }}
-            className="absolute bottom-20 right-20 w-96 h-96 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30"
-          />
-          <motion.div
-            animate={{
-              x: [0, 50, 0],
-              y: [0, -100, 0],
-              scale: [1, 1.4, 1],
-            }}
-            transition={{
-              duration: 30,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 4,
-            }}
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30"
-          />
         </div>
 
         {/* Content */}
@@ -223,7 +178,7 @@ const Home = () => {
             }}
             className="mb-4 md:mb-8"
           >
-            <div className="text-6xl md:text-9xl drop-shadow-2xl">💬</div>
+            <div className="text-6xl md:text-8xl drop-shadow-2xl">⚡</div>
           </motion.div>
 
           {/* Title with Gradient */}
@@ -231,11 +186,11 @@ const Home = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-3xl md:text-5xl lg:text-6xl font-black mb-4 md:mb-6 bg-gradient-to-r from-purple-600 via-pink-500 to-blue-500 bg-clip-text text-transparent leading-tight"
+            className="text-3xl md:text-5xl lg:text-6xl font-black mb-4 md:mb-6 bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 bg-clip-text text-transparent leading-tight"
           >
             Welcome Back,
             <br />
-            <span className="text-2xl md:text-4xl lg:text-5xl">{user.name}! 👋</span>
+            <span className="text-2xl md:text-4xl lg:text-5xl">{user.name}</span>
           </motion.h1>
 
           {/* Subtitle */}
@@ -243,10 +198,10 @@ const Home = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-base md:text-xl text-gray-600 dark:text-gray-300 mb-6 md:mb-8 leading-relaxed"
+            className="text-base md:text-xl text-zinc-400 mb-6 md:mb-8 leading-relaxed font-light"
           >
             Select a conversation from the sidebar or{" "}
-            <span className="font-semibold text-primary">add a friend</span> to start chatting
+            <span className="font-semibold text-zinc-200">add a friend</span> to start chatting
           </motion.p>
 
           {/* Stats Cards */}
@@ -257,30 +212,30 @@ const Home = () => {
             className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mt-8 md:mt-12"
           >
             {/* Online Users */}
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl p-4 md:p-6 shadow-xl border border-gray-200/50 dark:border-gray-700/50">
+            <div className="bg-zinc-900/50 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-zinc-800/50 hover:bg-zinc-900 transition-colors">
               <div className="flex items-center justify-center gap-2 md:gap-3 mb-2">
-                <div className="w-3 h-3 md:w-4 md:h-4 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+                <div className="w-3 h-3 md:w-4 md:h-4 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
+                <span className="text-2xl md:text-3xl font-bold text-zinc-100">
                   {user.onlineUser?.length || 0}
                 </span>
               </div>
-              <p className="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-400">
+              <p className="text-xs md:text-sm font-medium text-zinc-500">
                 Users Online
               </p>
             </div>
 
             {/* Messages Icon */}
-            <div className="bg-gradient-to-br from-primary to-secondary rounded-2xl p-4 md:p-6 shadow-xl">
-              <div className="text-4xl md:text-5xl mb-2">💌</div>
-              <p className="text-xs md:text-sm font-semibold text-white">
+            <div className="bg-zinc-800 rounded-2xl p-4 md:p-6 border border-zinc-700/50 flex flex-col items-center justify-center">
+              <div className="text-4xl md:text-5xl mb-2 text-zinc-300">💬</div>
+              <p className="text-xs md:text-sm font-semibold text-zinc-300">
                 Start Chatting
               </p>
             </div>
 
             {/* Secure Icon */}
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl p-4 md:p-6 shadow-xl border border-gray-200/50 dark:border-gray-700/50">
-              <div className="text-4xl md:text-5xl mb-2">🔒</div>
-              <p className="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-400">
+            <div className="bg-zinc-900/50 backdrop-blur-md rounded-2xl p-4 md:p-6 border border-zinc-800/50 hover:bg-zinc-900 transition-colors flex flex-col items-center justify-center">
+              <div className="text-4xl md:text-5xl mb-2 text-zinc-300">🔒</div>
+              <p className="text-xs md:text-sm font-medium text-zinc-500">
                 End-to-End Secure
               </p>
             </div>
@@ -291,11 +246,11 @@ const Home = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.8 }}
-            className="mt-8 md:mt-12 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4 md:p-6"
+            className="mt-8 md:mt-12 bg-zinc-900/50 backdrop-blur-md border border-zinc-800/50 rounded-2xl p-4 md:p-6 text-left hover:bg-zinc-900 transition-colors"
           >
-            <p className="text-xs md:text-sm text-blue-800 dark:text-blue-200 font-medium">
-              💡 <strong>Quick Tip:</strong> Click the{" "}
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/20 rounded text-primary font-semibold text-xs">
+            <p className="text-xs md:text-sm text-zinc-400 font-medium">
+              <span className="text-zinc-200">💡 Quick Tip:</span> Click the{" "}
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-zinc-800 rounded text-zinc-300 font-semibold text-xs border border-zinc-700">
                 + Add Friends
               </span>{" "}
               button to find users and start new conversations!

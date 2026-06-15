@@ -13,7 +13,7 @@ import { FiArrowUpLeft } from "react-icons/fi";
 import SearchUser from "./SearchUser";
 import { FaImage, FaVideo } from "react-icons/fa6";
 import { motion } from "framer-motion";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 const Sidebar = () => {
   const user = useSelector((state) => state?.user);
@@ -53,7 +53,7 @@ const Sidebar = () => {
               };
             }
           });
-          setAllUser(conversationUserData);
+          setAllUser(conversationUserData.filter(conv => !conv.isArchived));
         } else {
           console.error("Expected array but received:", typeof data);
           setAllUser([]);
@@ -102,17 +102,17 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="w-full h-full grid grid-cols-[64px,1fr] bg-white dark:bg-gray-900 shadow-lg">
+    <div className="w-full h-full grid grid-cols-[64px,1fr] bg-zinc-900 shadow-lg">
       {/* Left Icon Bar */}
-      <div className="bg-gradient-to-b from-primary/10 to-secondary/10 dark:from-gray-800 dark:to-gray-900 w-16 h-full py-5 flex flex-col justify-between items-center border-r border-gray-200 dark:border-gray-700">
+      <div className="bg-zinc-900 w-16 h-full py-5 flex flex-col justify-between items-center border-r border-zinc-800/50">
         <div className="space-y-2">
           <NavLink
             to="/"
             className={({ isActive }) =>
               `w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl transition-all duration-300 ${
                 isActive
-                  ? "bg-primary text-white shadow-glow"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-primary/20 dark:hover:bg-gray-700"
+                  ? "bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)]"
+                  : "text-zinc-400 hover:bg-zinc-800"
               }`
             }
             title="Chats"
@@ -122,7 +122,7 @@ const Sidebar = () => {
 
           <div
             onClick={() => setOpenSearchUser(true)}
-            className="w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl text-gray-600 dark:text-gray-400 hover:bg-primary/20 dark:hover:bg-gray-700 transition-all duration-300"
+            className="w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl text-zinc-400 hover:bg-zinc-800 transition-all duration-300"
             title="Add Friends"
           >
             <FaUserPlus size={20} />
@@ -130,7 +130,7 @@ const Sidebar = () => {
 
           <NavLink
             to="/groups"
-            className="w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl text-gray-600 dark:text-gray-400 hover:bg-primary/20 dark:hover:bg-gray-700 transition-all duration-300"
+            className="w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl text-zinc-400 hover:bg-zinc-800 transition-all duration-300"
             title="Groups (Coming Soon)"
           >
             <FaUsers size={20} />
@@ -138,7 +138,7 @@ const Sidebar = () => {
 
           <NavLink
             to="/archived"
-            className="w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl text-gray-600 dark:text-gray-400 hover:bg-primary/20 dark:hover:bg-gray-700 transition-all duration-300"
+            className="w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl text-zinc-400 hover:bg-zinc-800 transition-all duration-300"
             title="Archived Chats"
           >
             <MdArchive size={20} />
@@ -151,8 +151,8 @@ const Sidebar = () => {
             className={({ isActive }) =>
               `w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl transition-all duration-300 ${
                 isActive
-                  ? "bg-primary text-white shadow-glow"
-                  : "text-gray-600 dark:text-gray-400 hover:bg-primary/20 dark:hover:bg-gray-700"
+                  ? "bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)]"
+                  : "text-zinc-400 hover:bg-zinc-800"
               }`
             }
             title="Settings"
@@ -163,7 +163,7 @@ const Sidebar = () => {
           {/* Clickable Avatar - Navigate to Profile */}
           <button
             onClick={() => navigate("/profile")}
-            className="w-12 h-12 hover:ring-2 hover:ring-primary rounded-full transition-all duration-300"
+            className="w-12 h-12 hover:ring-2 hover:ring-indigo-500 rounded-full transition-all duration-300"
             title={`${user?.name} - View Profile`}
           >
             <Avatar
@@ -178,10 +178,10 @@ const Sidebar = () => {
       </div>
 
       {/* Chat List */}
-      <div className="w-full bg-gray-50 dark:bg-gray-800">
+      <div className="w-full bg-[#09090b]">
         {/* Header with 3-dot menu (VISIBLE ON MOBILE, HIDDEN ON DESKTOP) */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-800/50">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">
             Messages
           </h2>
 
@@ -189,10 +189,10 @@ const Sidebar = () => {
           <div className="lg:hidden relative sidebar-options-menu">
             <button
               onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+              className="p-2 hover:bg-zinc-800 rounded-full transition-colors"
               title="Options"
             >
-              <HiEllipsisVertical size={22} className="text-gray-700 dark:text-gray-300" />
+              <HiEllipsisVertical size={22} className="text-zinc-300" />
             </button>
 
             {/* Options Dropdown */}
@@ -200,51 +200,51 @@ const Sidebar = () => {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="absolute right-0 top-12 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 w-56 py-2 z-30"
+                className="absolute right-0 top-12 bg-zinc-900/95 backdrop-blur-xl rounded-xl shadow-2xl border border-zinc-800 w-56 py-2 z-30"
               >
                 <button
                   onClick={() => handleMenuOption("sort")}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300"
+                  className="w-full px-4 py-3 text-left hover:bg-zinc-800/80 transition-colors flex items-center gap-3 text-zinc-300"
                 >
                   <span className="text-lg">↕️</span>
                   <div>
-                    <p className="font-semibold">Sort Conversations</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">By date or unread</p>
+                    <p className="font-semibold text-zinc-100">Sort Conversations</p>
+                    <p className="text-xs text-zinc-500">By date or unread</p>
                   </div>
                 </button>
                 
                 <button
                   onClick={() => handleMenuOption("filter")}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300"
+                  className="w-full px-4 py-3 text-left hover:bg-zinc-800/80 transition-colors flex items-center gap-3 text-zinc-300"
                 >
                   <span className="text-lg">🔍</span>
                   <div>
-                    <p className="font-semibold">Filter Chats</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">By groups or tags</p>
+                    <p className="font-semibold text-zinc-100">Filter Chats</p>
+                    <p className="text-xs text-zinc-500">By groups or tags</p>
                   </div>
                 </button>
                 
                 <button
                   onClick={() => handleMenuOption("search")}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300"
+                  className="w-full px-4 py-3 text-left hover:bg-zinc-800/80 transition-colors flex items-center gap-3 text-zinc-300"
                 >
                   <span className="text-lg">💬</span>
                   <div>
-                    <p className="font-semibold">Search Messages</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Find in all chats</p>
+                    <p className="font-semibold text-zinc-100">Search Messages</p>
+                    <p className="text-xs text-zinc-500">Find in all chats</p>
                   </div>
                 </button>
 
-                <div className="border-t border-gray-200 dark:border-gray-700 my-2"></div>
+                <div className="border-t border-zinc-800 my-2"></div>
                 
                 <button
                   onClick={() => handleMenuOption("archive")}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300"
+                  className="w-full px-4 py-3 text-left hover:bg-zinc-800/80 transition-colors flex items-center gap-3 text-zinc-300"
                 >
                   <span className="text-lg">📁</span>
                   <div>
-                    <p className="font-semibold">Archived Chats</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">View hidden chats</p>
+                    <p className="font-semibold text-zinc-100">Archived Chats</p>
+                    <p className="text-xs text-zinc-500">View hidden chats</p>
                   </div>
                 </button>
               </motion.div>
@@ -255,12 +255,12 @@ const Sidebar = () => {
         <div className="h-[calc(100vh-65px)] overflow-x-hidden overflow-y-auto scrollbar">
           {allUser.length === 0 && (
             <div className="mt-12">
-              <div className="flex justify-center items-center my-4 text-gray-400">
+              <div className="flex justify-center items-center my-4 text-zinc-600">
                 <FiArrowUpLeft size={50} />
               </div>
               <div>
-                <p className="text-lg text-center text-gray-500 dark:text-gray-400 px-4">
-                  Click <strong className="text-primary">Add Friends</strong> to
+                <p className="text-lg text-center text-zinc-500 px-4">
+                  Click <strong className="text-indigo-500">Add Friends</strong> to
                   start a conversation
                 </p>
               </div>
@@ -275,8 +275,8 @@ const Sidebar = () => {
                 className={({ isActive }) =>
                   `flex items-center gap-3 py-4 px-4 border-l-4 transition-all duration-300 ${
                     isActive
-                      ? "bg-primary/10 dark:bg-primary/20 border-primary"
-                      : "border-transparent hover:bg-gray-100 dark:hover:bg-gray-700"
+                      ? "bg-zinc-800/50 border-indigo-500"
+                      : "border-transparent hover:bg-zinc-800/30"
                   }`
                 }
               >
@@ -290,11 +290,11 @@ const Sidebar = () => {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-ellipsis line-clamp-1 font-semibold text-gray-900 dark:text-gray-100">
+                  <h3 className="text-ellipsis line-clamp-1 font-semibold text-zinc-100">
                     {conv?.userDetails?.name}
                   </h3>
 
-                  <div className="text-gray-500 dark:text-gray-400 text-sm flex items-center gap-1">
+                  <div className="text-zinc-500 text-sm flex items-center gap-1">
                     <div>
                       {conv?.lastMsg?.imageUrl && (
                         <div className="flex items-center gap-1">
@@ -316,7 +316,7 @@ const Sidebar = () => {
                 </div>
                 {Boolean(conv?.unseenMsg) && (
                   <div className="flex-shrink-0">
-                    <span className="bg-primary text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-glow">
+                    <span className="bg-indigo-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
                       {conv?.unseenMsg}
                     </span>
                   </div>

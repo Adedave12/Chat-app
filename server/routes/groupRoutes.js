@@ -8,7 +8,7 @@ const {
   removeMember,
   leaveGroup,
   deleteGroup,
-} = require("../controllers/groupController");
+} = require("../controller/groupController");
 const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();

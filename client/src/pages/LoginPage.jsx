@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import toast from "react-hot-toast"; // Changed from sonner
+import { toast } from "sonner"; // Changed from sonner
 import { useDispatch } from "react-redux";
 import { setToken, setUser } from "../redux/userSlice";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";

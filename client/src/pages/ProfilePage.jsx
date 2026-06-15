@@ -7,7 +7,7 @@ import { MdInfo } from "react-icons/md";
 import { useTheme } from "../context/ThemeContext";
 import Avatar from "../components/Avatar";
 import ConfirmationDialog from "../components/ConfirmationDialog";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import axios from "axios";
 import uploadFile from "../helpers/uploadFile";
 import { setUser } from "../redux/userSlice";

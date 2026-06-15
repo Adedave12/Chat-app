@@ -4,7 +4,7 @@ import { IoClose, IoCheckmark } from "react-icons/io5";
 import { FaSearch } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useSelector } from "react-redux";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import api from "../helpers/api";
 import Avatar from "./Avatar";
 

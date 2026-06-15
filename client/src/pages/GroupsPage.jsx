@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import { IoArrowBack, IoAddCircle } from "react-icons/io5";
 import { FaUsers } from "react-icons/fa";
 import { motion } from "framer-motion";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import api from "../helpers/api";
 import Avatar from "../components/Avatar";
 import CreateGroupModal from "../components/CreateGroupModal";

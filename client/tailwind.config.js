@@ -23,6 +23,7 @@ export default {
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
+        outfit: ["Outfit", "sans-serif"],
       },
       backgroundImage: {
         "gradient-purple": "linear-gradient(135deg, #a855f7 0%, #c084fc 100%)",

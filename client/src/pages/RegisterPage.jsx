@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import { FaRegEyeSlash, FaRegEye } from "react-icons/fa";
 import { motion } from "framer-motion";
 

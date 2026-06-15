@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Toaster } from "react-hot-toast"; // Changed from sonner
-import toast from "react-hot-toast"; // Changed from sonner
+import { Toaster } from "sonner"; // Changed from sonner
+import { toast } from "sonner"; // Changed from sonner
 import { Outlet, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext";
 import { setToken, setOnlineUser, setSocketConnection, logout } from "./redux/userSlice";
@@ -79,6 +79,19 @@ const App = () => {
       console.error("❌ Socket connection error:", error);
     });
 
+    // Handle global notification sound
+    socketConnection.on("receive_message", (newMessage) => {
+      if (newMessage.msgByUserId !== user._id) {
+        try {
+          const audio = new Audio('/notification.mp3');
+          audio.volume = 0.5;
+          audio.play().catch(err => console.log('Audio play failed:', err));
+        } catch {
+          console.log('Notification sound not available');
+        }
+      }
+    });
+
     // Handle disconnection
     socketConnection.on("disconnect", (reason) => {
       console.log("🔌 Socket disconnected:", reason);
@@ -95,69 +108,21 @@ const App = () => {
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-        {/* React Hot Toast - Modern & Beautiful */}
+      <div className="min-h-screen bg-transparent transition-colors duration-300">
+        {/* Sonner Toast - Modern & Beautiful */}
         <Toaster
           position="top-center"
-          reverseOrder={false}
-          gutter={8}
+          richColors
+          expand={true}
+          closeButton
+          theme="dark"
           toastOptions={{
-            // Default duration
-            duration: 3000,
-            
-            // Default style - modern glass effect
             style: {
-              background: 'rgba(255, 255, 255, 0.95)',
-              color: '#1f2937',
-              padding: '16px 24px',
-              borderRadius: '16px',
-              fontSize: '14px',
-              fontWeight: '500',
-              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06)',
+              background: 'rgba(24, 24, 27, 0.8)', // Zinc 900
               backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
+              border: '1px solid rgba(255,255,255,0.05)'
             },
-            
-            // Success toast
-            success: {
-              duration: 3000,
-              style: {
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                color: '#fff',
-                boxShadow: '0 10px 40px rgba(16, 185, 129, 0.3)',
-              },
-              iconTheme: {
-                primary: '#fff',
-                secondary: '#10b981',
-              },
-            },
-            
-            // Error toast
-            error: {
-              duration: 4000,
-              style: {
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                color: '#fff',
-                boxShadow: '0 10px 40px rgba(239, 68, 68, 0.3)',
-              },
-              iconTheme: {
-                primary: '#fff',
-                secondary: '#ef4444',
-              },
-            },
-            
-            // Loading toast
-            loading: {
-              style: {
-                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                color: '#fff',
-                boxShadow: '0 10px 40px rgba(59, 130, 246, 0.3)',
-              },
-              iconTheme: {
-                primary: '#fff',
-                secondary: '#3b82f6',
-              },
-            },
+            className: 'my-toast-class font-outfit'
           }}
         />
         <Outlet />

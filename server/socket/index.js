@@ -136,6 +136,17 @@ io.on("connection", async (socket) => {
       console.log("To:", data.receiver);
       
       try {
+        // Block check
+        const senderDoc = await UserModel.findById(data.sender);
+        const receiverDoc = await UserModel.findById(data.receiver);
+
+        if (senderDoc?.blockedUsers?.includes(data.receiver)) {
+          return socket.emit("message_error", { message: "You have blocked this user." });
+        }
+        if (receiverDoc?.blockedUsers?.includes(data.sender)) {
+          return socket.emit("message_error", { message: "You are blocked by this user." });
+        }
+
         // Find or create conversation
         let conversation = await ConversationModel.findOne({
           $or: [

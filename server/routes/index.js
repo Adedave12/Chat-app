@@ -9,6 +9,9 @@ const updateUserDetails = require("../controller/updateUserDetails");
 const searchUser = require("../controller/searchUser");
 const forgotPassword = require("../controller/forgotPassword");
 const resetPassword = require("../controller/resetPassword");
+const toggleBlockUser = require("../controller/toggleBlockUser");
+const toggleArchiveUser = require("../controller/toggleArchiveUser");
+const groupRoutes = require("./groupRoutes");
 
 const router = express.Router();
 
@@ -25,5 +28,10 @@ router.get("/user-details", userDetails);
 router.get("/logout", logout);
 router.post("/update-user", updateUserDetails);
 router.post("/search-user", searchUser);
+router.post("/toggle-block-user", toggleBlockUser);
+router.post("/toggle-archive-user", toggleArchiveUser);
+
+// Group routes
+router.use("/groups", groupRoutes);
 
 module.exports = router;

@@ -1,9 +1,14 @@
 const { ConversationModel } = require("../models/ConversationModel");
+const UserModel = require("../models/UserModel");
 
 const getConversation = async (currentUserId) => {
   if (!currentUserId || currentUserId === "") {
     return [];
   }
+  
+  const currentUser = await UserModel.findById(currentUserId);
+  const archivedUsers = currentUser?.archivedUsers?.map(id => id.toString()) || [];
+
   const currentUserConversation = await ConversationModel.find({
     $or: [
       {
@@ -29,12 +34,22 @@ const getConversation = async (currentUserId) => {
           return prev;
         }
       }, 0);
+      
+      const otherUserId = conv.sender?._id?.toString() === currentUserId 
+        ? conv.receiver?._id?.toString() 
+        : conv.sender?._id?.toString();
+        
+      const isArchived = archivedUsers.includes(otherUserId);
+      const isBlocked = currentUser?.blockedUsers?.map(id => id.toString()).includes(otherUserId) || false;
+
       return {
         _id: conv?._id,
         sender: conv?.sender,
         receiver: conv?.receiver,
         unseenMsg: countUnseenMsg,
         lastMsg: conv.messages[conv?.messages?.length - 1],
+        isArchived,
+        isBlocked
       };
     });
 

@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { IoArrowBack, IoCamera, IoTrash, IoExit, IoPersonAdd } from "react-icons/io5";
 import { FaUsers, FaCrown, FaEdit } from "react-icons/fa";
 import { motion } from "framer-motion";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import api from "../helpers/api";
 import uploadFile from "../helpers/uploadFile";
 import Avatar from "../components/Avatar";

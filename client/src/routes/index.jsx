@@ -14,6 +14,7 @@ import MessagePage from "../components/MessagePage";
 import GroupsPage from "../pages/GroupsPage";
 import GroupChatPage from "../pages/GroupChatPage";
 import GroupInfoPage from "../pages/GroupInfoPage";
+import ArchivedPage from "../pages/ArchivedPage";
 import AuthLayouts from "../layout";
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -22,84 +23,56 @@ const router = createBrowserRouter([
     path: "/",
     element: <App />,
     children: [
-      // Protected routes
+      // Protected routes wrapped in Home layout
       {
-        index: true,
+        path: "/",
         element: (
           <ProtectedRoute>
             <Home />
           </ProtectedRoute>
         ),
-      },
-      {
-        path: ":userId",
-        element: (
-          <ProtectedRoute>
-            <MessagePage />
-          </ProtectedRoute>
-        ),
-      },
-      
-      // Profile route
-      {
-        path: "profile",
-        element: (
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        ),
-      },
-      
-      // Settings routes
-      {
-        path: "settings",
-        element: (
-          <ProtectedRoute>
-            <SettingsPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "settings/password",
-        element: (
-          <ProtectedRoute>
-            <ChangePasswordPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "settings/theme",
-        element: (
-          <ProtectedRoute>
-            <ThemeSettingsPage />
-          </ProtectedRoute>
-        ),
-      },
-      
-      // Group routes
-      {
-        path: "groups",
-        element: (
-          <ProtectedRoute>
-            <GroupsPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "groups/:groupId",
-        element: (
-          <ProtectedRoute>
-            <GroupChatPage />
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "groups/:groupId/info",
-        element: (
-          <ProtectedRoute>
-            <GroupInfoPage />
-          </ProtectedRoute>
-        ),
+        children: [
+          {
+            path: ":userId",
+            element: <MessagePage />,
+          },
+          // Profile route
+          {
+            path: "profile",
+            element: <ProfilePage />,
+          },
+          // Settings routes
+          {
+            path: "settings",
+            element: <SettingsPage />,
+          },
+          {
+            path: "settings/password",
+            element: <ChangePasswordPage />,
+          },
+          {
+            path: "settings/theme",
+            element: <ThemeSettingsPage />,
+          },
+          // Group routes
+          {
+            path: "groups",
+            element: <GroupsPage />,
+          },
+          {
+            path: "groups/:groupId",
+            element: <GroupChatPage />,
+          },
+          {
+            path: "groups/:groupId/info",
+            element: <GroupInfoPage />,
+          },
+          // Archived route
+          {
+            path: "archived",
+            element: <ArchivedPage />,
+          },
+        ],
       },
       
       // Public Auth routes

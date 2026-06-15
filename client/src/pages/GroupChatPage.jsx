@@ -6,11 +6,12 @@ import { FaAngleLeft, FaPlus, FaImage, FaVideo, FaInfoCircle } from "react-icons
 import { IoMdSend, IoIosClose } from "react-icons/io";
 import { HiDotsVertical } from "react-icons/hi";
 import { motion } from "framer-motion";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import moment from "moment";
 import Avatar from "../components/Avatar";
 import uploadFile from "../helpers/uploadFile";
 import backgroundImage from "../assets/wallapaper.jpeg";
+import api from "../helpers/api";
 
 const GroupChatPage = () => {
   const { groupId } = useParams();
@@ -35,6 +36,22 @@ const GroupChatPage = () => {
       currentMessage.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [allMessages]);
+
+  // Fetch group data
+  useEffect(() => {
+    if (!groupId) return;
+    const fetchGroupData = async () => {
+      try {
+        const response = await api.get(`/api/groups/${groupId}`);
+        if (response.data.success) {
+          setGroupData(response.data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch group data:", error);
+      }
+    };
+    fetchGroupData();
+  }, [groupId]);
 
   // Socket setup
   useEffect(() => {

@@ -9,9 +9,10 @@ import { NavLink, useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { FiArrowUpLeft } from "react-icons/fi";
+import { FiArrowUpLeft, FiDownload } from "react-icons/fi";
 import SearchUser from "./SearchUser";
 import { FaImage, FaVideo } from "react-icons/fa6";
+import InstallModal from "./InstallModal";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -21,9 +22,24 @@ const Sidebar = () => {
   const [allUser, setAllUser] = useState([]);
   const [openSearchUser, setOpenSearchUser] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const socketConnection = useSelector(
     (state) => state?.user?.socketConnection
   );
+
+  const handleInstallClick = () => {
+    if (window.deferredPrompt) {
+      window.deferredPrompt.prompt();
+      window.deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the install prompt');
+        }
+        window.deferredPrompt = null;
+      });
+    } else {
+      setShowInstallModal(true);
+    }
+  };
 
   useEffect(() => {
     if (socketConnection && user && user._id) {
@@ -173,6 +189,15 @@ const Sidebar = () => {
               imageUrl={user?.profile_pic}
               userId={user?._id}
             />
+          </button>
+          
+          {/* Install App Button */}
+          <button
+            onClick={handleInstallClick}
+            className="w-12 h-12 flex justify-center items-center rounded-xl bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] mt-2"
+            title="Install App"
+          >
+            <FiDownload size={20} />
           </button>
         </div>
       </div>
@@ -330,6 +355,11 @@ const Sidebar = () => {
       {/* Search User Modal */}
       {openSearchUser && (
         <SearchUser onClose={() => setOpenSearchUser(false)} />
+      )}
+
+      {/* Install App Modal */}
+      {showInstallModal && (
+        <InstallModal onClose={() => setShowInstallModal(false)} />
       )}
     </div>
   );

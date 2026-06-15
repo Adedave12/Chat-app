@@ -13,7 +13,7 @@ import Loading from "./Loading";
 import moment from "moment";
 import { toast } from "sonner";
 import api from "../helpers/api";
-import { setToken, logout } from "../redux/userSlice";
+import { setToken, logout, toggleArchivedUser, toggleBlockedUser } from "../redux/userSlice";
 import { useDispatch } from "react-redux";
 
 const MessagePage = () => {
@@ -57,6 +57,7 @@ const MessagePage = () => {
       const response = await api.post("/api/toggle-block-user", { targetUserId: params.userId });
       if (response.data.success) {
         setIsBlockedLocal(response.data.isBlocked);
+        dispatch(toggleBlockedUser(params.userId));
         toast.success(response.data.message);
       }
     } catch (error) {
@@ -70,6 +71,7 @@ const MessagePage = () => {
       const response = await api.post("/api/toggle-archive-user", { targetUserId: params.userId });
       if (response.data.success) {
         setIsArchivedLocal(response.data.isArchived);
+        dispatch(toggleArchivedUser(params.userId));
         toast.success(response.data.message);
       }
     } catch (error) {
@@ -470,8 +472,19 @@ const MessagePage = () => {
       </header>
 
       {/* Messages Section */}
-      <section className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative bg-transparent">
-        <div className="flex flex-col gap-2 py-4 px-2" ref={currentMessage}>
+      <section 
+        className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative"
+        style={{
+          backgroundImage: `url('/wallpaper.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+        }}
+      >
+        {/* Dark Overlay for Readability */}
+        <div className="absolute inset-0 bg-black/60 pointer-events-none z-0"></div>
+        
+        <div className="flex flex-col gap-2 py-4 px-2 relative z-10" ref={currentMessage}>
           {allMessage.length === 0 && (
             <div className="text-center text-zinc-500 mt-10">
               <p className="text-lg">No messages yet</p>

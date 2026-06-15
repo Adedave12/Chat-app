@@ -27,6 +27,36 @@ const App = () => {
     if (token) {
       dispatch(setToken(token));
     }
+
+    // Audio Unlock for Mobile Browsers
+    const unlockAudio = () => {
+      if (!window.audioUnlocked) {
+        const audio = new Audio('/notification.mp3');
+        audio.volume = 0;
+        audio.play().then(() => {
+          window.audioUnlocked = true;
+          audio.pause();
+        }).catch(() => {});
+        document.removeEventListener('touchstart', unlockAudio);
+        document.removeEventListener('click', unlockAudio);
+      }
+    };
+    document.addEventListener('touchstart', unlockAudio);
+    document.addEventListener('click', unlockAudio);
+
+    // PWA Install Prompt Handler
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+      window.dispatchEvent(new Event('pwa-prompt-ready'));
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('click', unlockAudio);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, [dispatch]);
 
   // Socket Connection - MOVED HERE FROM Home.jsx
@@ -111,7 +141,7 @@ const App = () => {
       <div className="min-h-screen bg-transparent transition-colors duration-300">
         {/* Sonner Toast - Modern & Beautiful */}
         <Toaster
-          position="top-center"
+          position="top-left"
           richColors
           expand={true}
           closeButton

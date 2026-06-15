@@ -322,15 +322,15 @@ const GroupChatPage = () => {
               className={`
                 p-3 rounded-2xl w-fit max-w-[280px] md:max-w-sm lg:max-w-md transition-all duration-300
                 ${
-                  user._id === msg.msgByUserId._id
+                  user._id === (msg.msgByUserId?._id || msg.msgByUserId)
                     ? "ml-auto bg-emerald-600 text-white rounded-br-sm"
                     : "bg-zinc-800 text-zinc-100 rounded-bl-sm border border-zinc-700/50"
                 }
               `}
             >
-              {user._id !== msg.msgByUserId._id && (
+              {user._id !== (msg.msgByUserId?._id || msg.msgByUserId) && (
                 <p className="text-xs font-semibold mb-1 text-emerald-400">
-                  {msg.msgByUserId.name}
+                  {msg.msgByUserId?.name || "Unknown User"}
                 </p>
               )}
               

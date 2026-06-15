@@ -46,9 +46,31 @@ const ProfilePage = () => {
     try {
       setUploadingPhoto(true);
       const uploadedPhoto = await uploadFile(file);
-      setFormData((prev) => ({ ...prev, profile_pic: uploadedPhoto.url }));
+      const newPhotoUrl = uploadedPhoto?.url || uploadedPhoto?.secure_url;
+      setFormData((prev) => ({ ...prev, profile_pic: newPhotoUrl }));
       setHasChanges(true);
-      toast.success("Photo uploaded successfully!");
+      
+      // Auto-save the profile picture immediately
+      if (newPhotoUrl) {
+        const URL = `${import.meta.env.VITE_BACKEND_URL}/api/update-user`;
+        const token = sessionStorage.getItem("token");
+        const response = await axios.post(
+          URL,
+          {
+            name: formData.name,
+            profile_pic: newPhotoUrl,
+            bio: formData.bio,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true,
+          }
+        );
+        if (response.data.success) {
+          dispatch(setUser(response.data.data));
+          toast.success("Photo uploaded and saved successfully!");
+        }
+      }
     } catch (error) {
       console.error("Photo upload error:", error);
       toast.error("Failed to upload photo");

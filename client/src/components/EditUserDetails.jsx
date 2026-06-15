@@ -50,10 +50,26 @@ const EditUserDetails = ({ onClose, user }) => {
       setUploadingPhoto(true);
       const uploadPhoto = await uploadFile(file);
       setIsChanged(true);
+      
+      const newPhotoUrl = uploadPhoto?.url || uploadPhoto?.secure_url;
+      
       setData((prev) => ({
         ...prev,
-        profile_pic: uploadPhoto?.url,
+        profile_pic: newPhotoUrl,
       }));
+
+      // Auto-save the profile picture immediately
+      if (newPhotoUrl) {
+        const dataToSend = {
+          name: data.name,
+          profile_pic: newPhotoUrl,
+        };
+        const response = await api.post("/api/update-user", dataToSend);
+        if (response.data.success) {
+          dispatch(setUser(response.data.data));
+          toast.success("Profile picture updated successfully!");
+        }
+      }
     } catch (error) {
       toast.error("Failed to upload photo");
     } finally {

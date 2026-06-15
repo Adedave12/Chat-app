@@ -437,6 +437,13 @@ const Sidebar = () => {
                     </p>
                   </div>
                 </div>
+                {Boolean(group?.unseenMsg) && (
+                  <div className="flex-shrink-0">
+                    <span className="bg-indigo-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                      {group?.unseenMsg}
+                    </span>
+                  </div>
+                )}
               </NavLink>
             );
           })}

@@ -76,9 +76,23 @@ async function getUserGroups(req, res) {
       })
       .sort({ updatedAt: -1 });
 
+    // Calculate unseen messages for each group
+    const groupsWithUnseen = await Promise.all(groups.map(async (group) => {
+      const unseenMsgCount = await MessageModel.countDocuments({
+        groupId: group._id,
+        msgByUserId: { $ne: userId },
+        seen: false,
+      });
+
+      return {
+        ...group.toObject(),
+        unseenMsg: unseenMsgCount,
+      };
+    }));
+
     return res.status(200).json({
       message: "Groups fetched successfully",
-      data: groups,
+      data: groupsWithUnseen,
       success: true,
     });
   } catch (error) {

@@ -1,8 +1,8 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
-import axios from "axios";
 import { toast } from "sonner";
+import api from "../helpers/api";
 import Avatar from "./Avatar";
 import uploadFile from "../helpers/uploadFile";
 import Divider from "./Divider";
@@ -16,6 +16,7 @@ const EditUserDetails = ({ onClose, user }) => {
   });
   const [isChanged, setIsChanged] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const uploadPhotoRef = useRef();
   const dispatch = useDispatch();
@@ -43,12 +44,21 @@ const EditUserDetails = ({ onClose, user }) => {
 
   const handleUploadPhoto = async (e) => {
     const file = e.target.files[0];
-    const uploadPhoto = await uploadFile(file);
-    setIsChanged(true);
-    setData((prev) => ({
-      ...prev,
-      profile_pic: uploadPhoto?.url,
-    }));
+    if (!file) return;
+    
+    try {
+      setUploadingPhoto(true);
+      const uploadPhoto = await uploadFile(file);
+      setIsChanged(true);
+      setData((prev) => ({
+        ...prev,
+        profile_pic: uploadPhoto?.url,
+      }));
+    } catch (error) {
+      toast.error("Failed to upload photo");
+    } finally {
+      setUploadingPhoto(false);
+    }
   };
 
   const handleSave = async () => {
@@ -64,12 +74,7 @@ const EditUserDetails = ({ onClose, user }) => {
         // Add any other fields you need to update, but exclude socket connections
       };
 
-      const response = await axios({
-        method: "post",
-        url: URL,
-        data: dataToSend, // Use the filtered data
-        withCredentials: true,
-      });
+      const response = await api.post("/api/update-user", dataToSend);
 
       console.log("Response:", response);
       if (response.data.success) {
@@ -152,9 +157,10 @@ const EditUserDetails = ({ onClose, user }) => {
             </button>
             <button
               type="submit"
-              className="border-primary bg-primary text-white border px-4 py-1 rounded hover:bg-secondary"
+              disabled={uploadingPhoto}
+              className="border-primary bg-primary text-white border px-4 py-1 rounded hover:bg-secondary disabled:opacity-50"
             >
-              Save
+              {uploadingPhoto ? "Uploading..." : "Save"}
             </button>
           </div>
         </form>

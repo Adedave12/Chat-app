@@ -148,7 +148,7 @@ const Sidebar = () => {
             to="/"
             className={({ isActive }) =>
               `w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl transition-all duration-300 ${
-                isActive
+                isActive && !isGroupsMode
                   ? "bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)]"
                   : "text-zinc-400 hover:bg-zinc-800"
               }`
@@ -158,19 +158,11 @@ const Sidebar = () => {
             <HiMiniChatBubbleOvalLeftEllipsis size={22} />
           </NavLink>
 
-          <div
-            onClick={() => isGroupsMode ? setShowCreateGroup(true) : setOpenSearchUser(true)}
-            className="w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl text-zinc-400 hover:bg-zinc-800 transition-all duration-300"
-            title={isGroupsMode ? "Create Group" : "Add Friends"}
-          >
-            <FaUserPlus size={20} />
-          </div>
-
           <NavLink
             to="/groups"
             className={({ isActive }) =>
               `w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl transition-all duration-300 ${
-                isActive
+                isActive || isGroupsMode
                   ? "bg-indigo-600 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)]"
                   : "text-zinc-400 hover:bg-zinc-800"
               }`
@@ -187,6 +179,23 @@ const Sidebar = () => {
           >
             <MdArchive size={20} />
           </NavLink>
+
+          {/* We don't have a BlockedPage yet, so just use a toast or nav if it existed */}
+          <button
+            onClick={() => toast("Blocked users feature coming soon!")}
+            className="w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl text-zinc-400 hover:bg-zinc-800 transition-all duration-300"
+            title="Blocked Users"
+          >
+            <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" height="20" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M256 512c141.4 0 256-114.6 256-256S397.4 0 256 0 0 114.6 0 256s114.6 256 256 256zM116.4 395.6C82 358 64 308.2 64 256c0-106 86-192 192-192 52.2 0 102 18 139.6 52.4l-279.2 279.2zM395.6 116.4C430 154 448 203.8 448 256c0 106-86 192-192 192-52.2 0-102-18-139.6-52.4l279.2-279.2z"></path></svg>
+          </button>
+
+          <div
+            onClick={() => isGroupsMode ? setShowCreateGroup(true) : setOpenSearchUser(true)}
+            className="w-12 h-12 cursor-pointer flex justify-center items-center rounded-xl text-zinc-400 hover:bg-zinc-800 transition-all duration-300"
+            title={isGroupsMode ? "Create Group" : "Add Friends"}
+          >
+            <FaUserPlus size={20} />
+          </div>
         </div>
 
         <div className="flex flex-col items-center space-y-2">

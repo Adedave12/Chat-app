@@ -435,7 +435,9 @@ const MessagePage = () => {
                   online
                 </span>
               ) : (
-                <span className="text-gray-400">offline</span>
+                <span className="text-slate-400">
+                  {dataUser.updatedAt ? `last seen ${moment(dataUser.updatedAt).fromNow()}` : "offline"}
+                </span>
               )}
             </p>
           </div>

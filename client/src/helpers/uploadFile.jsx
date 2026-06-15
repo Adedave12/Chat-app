@@ -18,7 +18,7 @@ const uploadFile = async (file) => {
     }
     
     const responseData = await response.json();
-    return responseData;
+    return { ...responseData, url: responseData.secure_url || responseData.url };
   } catch (error) {
     console.error("Error uploading file:", error);
     throw error;

@@ -86,6 +86,7 @@ io.on("connection", async (socket) => {
           email: userDetails.email,
           profile_pic: userDetails.profile_pic,
           online: isOtherUserOnline,
+          updatedAt: userDetails.updatedAt,
         };
 
         socket.emit("message-user", payload);
@@ -332,7 +333,8 @@ io.on("connection", async (socket) => {
         
         // Verify user is a member
         const group = await GroupModel.findById(groupId);
-        if (!group || !group.members.includes(userId)) {
+        const memberIds = group ? group.members.map(id => id.toString()) : [];
+        if (!group || !memberIds.includes(userId.toString())) {
           socket.emit("group_message_error", { 
             message: "You are not a member of this group" 
           });
@@ -387,7 +389,8 @@ io.on("connection", async (socket) => {
         
         // Verify user is a member
         const group = await GroupModel.findById(groupId);
-        if (!group || !group.members.includes(userId)) {
+        const memberIds = group ? group.members.map(id => id.toString()) : [];
+        if (!group || !memberIds.includes(userId.toString())) {
           socket.emit("group_messages_error", { 
             message: "You are not a member of this group" 
           });

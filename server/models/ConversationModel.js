@@ -24,6 +24,10 @@ const messageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    seenBy: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    }],
     groupId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Group",

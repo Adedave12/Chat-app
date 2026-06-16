@@ -416,6 +416,30 @@ io.on("connection", async (socket) => {
       }
     });
 
+    // Mark group messages as seen
+    socket.on("group_seen", async (groupId) => {
+      try {
+        console.log(`👁️ MARKING GROUP ${groupId} AS SEEN FOR USER ${userId}`);
+        const result = await MessageModel.updateMany(
+          {
+            groupId: groupId,
+            msgByUserId: { $ne: userId },
+            seenBy: { $ne: userId }
+          },
+          {
+            $addToSet: { seenBy: userId }
+          }
+        );
+        
+        if (result.modifiedCount > 0) {
+          // Tell the specific user to update their UI
+          socket.emit("group_seen_cleared", groupId);
+        }
+      } catch (error) {
+        console.error("Group seen error:", error);
+      }
+    });
+
     // Group member update notification
     socket.on("group_member_update", ({ groupId, action, updatedUserId }) => {
       console.log("👥 GROUP MEMBER UPDATE:", { groupId, action, updatedUserId });

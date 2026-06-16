@@ -67,6 +67,9 @@ const GroupChatPage = () => {
 
     // Request group messages
     socketConnection.emit("group_messages", groupId);
+    
+    // Mark messages as seen
+    socketConnection.emit("group_seen", groupId);
 
     // Listen for group messages loaded
     const handleMessagesLoaded = (data) => {

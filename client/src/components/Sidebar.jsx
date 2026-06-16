@@ -60,8 +60,24 @@ const Sidebar = () => {
         }
       };
       fetchGroups();
+      
+      if (socketConnection) {
+        socketConnection.on("group_seen_cleared", (clearedGroupId) => {
+          setAllGroups((prev) => 
+            prev.map(group => 
+              group._id === clearedGroupId 
+                ? { ...group, unseenMsg: 0 } 
+                : group
+            )
+          );
+        });
+        
+        return () => {
+          socketConnection.off("group_seen_cleared");
+        };
+      }
     }
-  }, [isGroupsMode]);
+  }, [isGroupsMode, socketConnection]);
 
   useEffect(() => {
     if (socketConnection && user && user._id) {

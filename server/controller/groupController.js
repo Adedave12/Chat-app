@@ -81,7 +81,7 @@ async function getUserGroups(req, res) {
       const unseenMsgCount = await MessageModel.countDocuments({
         groupId: group._id,
         msgByUserId: { $ne: userId },
-        seen: false,
+        seenBy: { $ne: userId },
       });
 
       return {

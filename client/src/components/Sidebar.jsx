@@ -59,10 +59,14 @@ const Sidebar = () => {
           console.error("Fetch groups error:", error);
         }
       };
-      fetchGroups();
+      
+      // Fetch whenever we enter groups mode OR when we navigate back to the sidebar on mobile
+      if (basePath || allGroups.length === 0) {
+        fetchGroups();
+      }
       
       if (socketConnection) {
-        socketConnection.on("group_seen_cleared", (clearedGroupId) => {
+        const handleGroupSeenCleared = (clearedGroupId) => {
           setAllGroups((prev) => 
             prev.map(group => 
               group._id === clearedGroupId 
@@ -70,14 +74,15 @@ const Sidebar = () => {
                 : group
             )
           );
-        });
+        };
+        socketConnection.on("group_seen_cleared", handleGroupSeenCleared);
         
         return () => {
-          socketConnection.off("group_seen_cleared");
+          socketConnection.off("group_seen_cleared", handleGroupSeenCleared);
         };
       }
     }
-  }, [isGroupsMode, socketConnection]);
+  }, [isGroupsMode, socketConnection, basePath]);
 
   useEffect(() => {
     if (socketConnection && user && user._id) {

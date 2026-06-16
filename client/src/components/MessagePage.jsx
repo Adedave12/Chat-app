@@ -403,7 +403,7 @@ const MessagePage = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#09090b]">
+    <div className="h-[100dvh] flex flex-col bg-[#09090b]">
       {/* Header */}
       <header className="sticky top-0 h-16 bg-zinc-900/80 backdrop-blur-xl flex justify-between items-center px-4 shadow-md z-50 border-b border-zinc-800/50">
         <div className="flex items-center gap-4">
@@ -479,7 +479,7 @@ const MessagePage = () => {
 
       {/* Messages Section */}
       <section 
-        className="h-[calc(100vh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative"
+        className="h-[calc(100dvh-128px)] overflow-x-hidden overflow-y-scroll scrollbar relative"
         style={{
           backgroundImage: `url('/wallpaper.png')`,
           backgroundSize: 'cover',

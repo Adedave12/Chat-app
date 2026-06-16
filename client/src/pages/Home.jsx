@@ -75,7 +75,7 @@ const Home = () => {
   };
 
   return (
-    <div className="grid lg:grid-cols-[320px,1fr] h-screen max-h-screen bg-transparent">
+    <div className="grid lg:grid-cols-[320px,1fr] h-[100dvh] max-h-[100dvh] bg-transparent">
       {/* Sidebar - ALWAYS VISIBLE on mobile when basePath, hidden on desktop unless basePath */}
       <section className={`${!basePath && "hidden"} lg:block`}>
         <Sidebar />

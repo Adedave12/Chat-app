@@ -27,6 +27,8 @@ const Sidebar = () => {
   const [showInstallModal, setShowInstallModal] = useState(false);
   const location = useLocation();
   const isGroupsMode = location.pathname.startsWith('/groups');
+  // True when user is at the root sidebar (no chat open) — used to refresh group counts on mobile back-navigation
+  const isAtBasePath = location.pathname === '/' || location.pathname === '/groups';
   const [allGroups, setAllGroups] = useState([]);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const socketConnection = useSelector(
@@ -60,8 +62,8 @@ const Sidebar = () => {
         }
       };
       
-      // Fetch whenever we enter groups mode OR when we navigate back to the sidebar on mobile
-      if (basePath || allGroups.length === 0) {
+      // Always fetch when entering groups mode; also refresh when user navigates back to sidebar root
+      if (isAtBasePath || allGroups.length === 0) {
         fetchGroups();
       }
       
@@ -82,7 +84,7 @@ const Sidebar = () => {
         };
       }
     }
-  }, [isGroupsMode, socketConnection, basePath]);
+  }, [isGroupsMode, socketConnection, isAtBasePath]);
 
   useEffect(() => {
     if (socketConnection && user && user._id) {

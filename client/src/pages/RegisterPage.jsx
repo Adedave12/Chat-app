@@ -75,10 +75,8 @@ const RegisterPage = () => {
           password: "",
         });
         
-        // Navigate to OTP verification
-        navigate("/verify-otp", {
-          state: { userId: response.data.userId },
-        });
+        // Navigate directly to login since OTP is disabled
+        navigate("/login");
       }
     } catch (error) {
       console.error("Registration error:", error);

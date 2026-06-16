@@ -26,12 +26,6 @@ async function registerUser(req, res) {
       });
     }
 
-    // Generate OTP
-    const otp = generateOTP();
-    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-    console.log("Generated OTP:", otp);
-
     // Hash password - REDUCE SALT ROUNDS FOR SPEED
     const salt = await bcryptjs.genSalt(8); // Changed from 10 to 8 (faster, still secure)
     const hashPassword = await bcryptjs.hash(password, salt);
@@ -39,54 +33,38 @@ async function registerUser(req, res) {
     let userId;
 
     if (existingUser && !existingUser.isVerified) {
-      // Update existing unverified user
+      // Update existing unverified user to verified
       existingUser.name = name;
       existingUser.password = hashPassword;
       existingUser.profile_pic = profile_pic || "";
-      existingUser.otp = otp;
-      existingUser.otpExpiry = otpExpiry;
+      existingUser.isVerified = true;
+      existingUser.otp = "";
+      existingUser.otpExpiry = null;
       await existingUser.save();
 
       userId = existingUser._id;
-      console.log("Updated existing user:", userId);
+      console.log("Updated existing user to verified:", userId);
     } else {
-      // Create new user
+      // Create new verified user
       const newUser = new UserModel({
         name,
         email,
         password: hashPassword,
         profile_pic: profile_pic || "",
-        otp,
-        otpExpiry,
-        isVerified: false,
+        isVerified: true,
       });
 
       await newUser.save();
       userId = newUser._id;
-      console.log("New user created:", userId);
+      console.log("New user created and verified:", userId);
     }
 
-    // ⚡ CRITICAL FIX: Send response IMMEDIATELY, send email in background
-    // Respond to user first
+    // Respond to user
     res.status(201).json({
-      message: "Registration successful! OTP sent to your email.",
+      message: "Registration successful! You can now log in.",
       userId: userId,
       success: true,
     });
-
-    // ⚡ Send email asynchronously (don't await, don't block response)
-    sendOTPEmail(email, otp, name)
-      .then(() => {
-        console.log("✅ OTP email sent successfully to:", email);
-      })
-      .catch((emailError) => {
-        console.error("❌ Email sending failed (non-blocking):", emailError);
-        // Email failed but user is already registered
-        // You could implement a retry mechanism or manual resend option
-      });
-
-    // Note: We're not deleting the user if email fails anymore
-    // because we already responded. Instead, implement a "Resend OTP" feature.
 
   } catch (error) {
     console.error("Registration error:", error);

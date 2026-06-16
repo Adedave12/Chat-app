@@ -24,14 +24,7 @@ async function login(req, res) {
     }
 
     // Check if email is verified
-    if (!user.isVerified) {
-      return res.status(403).json({
-        message: "Please verify your email first",
-        userId: user._id,
-        error: true,
-        needsVerification: true,
-      });
-    }
+    // (Verification is now disabled, allowing all users to login immediately)
 
     // Verify password
     const isPasswordValid = await bcryptjs.compare(password, user.password);

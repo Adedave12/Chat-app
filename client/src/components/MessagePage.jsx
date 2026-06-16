@@ -34,6 +34,7 @@ const MessagePage = () => {
     imageUrl: "",
     videoUrl: "",
   });
+  const [loading, setLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [allMessage, setAllMessage] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
@@ -201,6 +202,8 @@ const MessagePage = () => {
     console.log("Current user:", user._id);
     console.log("Chat with:", params.userId);
 
+    setLoading(true);
+
     // Small delay to ensure socket is ready
     const setupTimeout = setTimeout(() => {
       socketConnection.emit("message-page", params.userId);
@@ -224,6 +227,7 @@ const MessagePage = () => {
       } else {
         setAllMessage([]);
       }
+      setLoading(false);
     };
 
     // Listen for new incoming message
@@ -401,7 +405,7 @@ const MessagePage = () => {
   return (
     <div className="h-screen flex flex-col bg-[#09090b]">
       {/* Header */}
-      <header className="sticky top-0 h-16 bg-zinc-900/80 backdrop-blur-xl flex justify-between items-center px-4 shadow-md z-10 border-b border-zinc-800/50">
+      <header className="sticky top-0 h-16 bg-zinc-900/80 backdrop-blur-xl flex justify-between items-center px-4 shadow-md z-50 border-b border-zinc-800/50">
         <div className="flex items-center gap-4">
           <Link to={"/"} className="lg:hidden hover:text-primary transition-colors" title="Go back">
             <FaAngleLeft size={25} />
@@ -487,12 +491,17 @@ const MessagePage = () => {
         <div className="absolute inset-0 bg-black/60 pointer-events-none z-0"></div>
         
         <div className="flex flex-col gap-2 py-4 px-2 relative z-10" ref={currentMessage}>
-          {allMessage.length === 0 && (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center mt-20">
+              <div className="w-10 h-10 border-4 border-zinc-600 border-t-emerald-500 rounded-full animate-spin"></div>
+              <p className="text-zinc-400 mt-4 text-sm animate-pulse">Loading messages...</p>
+            </div>
+          ) : allMessage.length === 0 ? (
             <div className="text-center text-zinc-500 mt-10">
               <p className="text-lg">No messages yet</p>
               <p className="text-sm">Start the conversation! 👋</p>
             </div>
-          )}
+          ) : null}
 
           {allMessage.map((msg, index) => {
             return (

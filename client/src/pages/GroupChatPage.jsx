@@ -22,6 +22,7 @@ const GroupChatPage = () => {
   const [groupData, setGroupData] = useState(null);
   const [allMessages, setAllMessages] = useState([]);
   const [message, setMessage] = useState({ text: "", imageUrl: "", videoUrl: "" });
+  const [loading, setLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [openImageVideoUpload, setOpenImageVideoUpload] = useState(false);
   const [typingUsers, setTypingUsers] = useState([]);
@@ -59,6 +60,8 @@ const GroupChatPage = () => {
 
     console.log("🔌 Setting up group chat:", groupId);
 
+    setLoading(true);
+
     // Join group room
     socketConnection.emit("join_group", groupId);
 
@@ -70,6 +73,7 @@ const GroupChatPage = () => {
       if (data.groupId === groupId) {
         console.log("📜 Group messages loaded:", data.messages.length);
         setAllMessages(data.messages);
+        setLoading(false);
       }
     };
 
@@ -227,7 +231,7 @@ const GroupChatPage = () => {
   return (
     <div className="h-screen flex flex-col bg-[#09090b]">
       {/* Header */}
-      <header className="sticky top-0 h-16 bg-zinc-900/80 backdrop-blur-xl flex justify-between items-center px-4 shadow-md z-10 border-b border-zinc-800/50">
+      <header className="sticky top-0 h-16 bg-zinc-900/80 backdrop-blur-xl flex justify-between items-center px-4 shadow-md z-50 border-b border-zinc-800/50">
         <div className="flex items-center gap-4">
           <Link to="/groups" className="lg:hidden hover:text-emerald-400 transition-colors">
             <FaAngleLeft size={25} />
@@ -308,13 +312,19 @@ const GroupChatPage = () => {
       >
         {/* Dark Overlay for Readability */}
         <div className="absolute inset-0 bg-black/60 pointer-events-none z-0"></div>
+        
         <div className="flex flex-col gap-2 py-4 px-2 relative z-10" ref={currentMessage}>
-          {allMessages.length === 0 && (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center mt-20">
+              <div className="w-10 h-10 border-4 border-zinc-600 border-t-emerald-500 rounded-full animate-spin"></div>
+              <p className="text-zinc-400 mt-4 text-sm animate-pulse">Loading messages...</p>
+            </div>
+          ) : allMessages.length === 0 ? (
             <div className="text-center text-zinc-500 mt-10">
               <p className="text-lg">No messages yet</p>
-              <p className="text-sm">Be the first to send a message! 👋</p>
+              <p className="text-sm">Start the conversation! 👋</p>
             </div>
-          )}
+          ) : null}
 
           {allMessages.map((msg) => (
             <div
